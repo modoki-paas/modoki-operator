@@ -28,15 +28,52 @@ type ApplicationSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
-	// Foo is an example field of Application. Edit Application_types.go to remove/update
-	Foo string `json:"foo,omitempty"`
+	// Domains are requested domains for the ingress of the application
+	Domains []string `json:"domains"`
+
+	// Image is the url for Docker registry
+	Image string `json:"image"`
+
+	// Command is an entrypoint array
+	Command []string `json:"command"`
+
+	// Args is the arguments to the entrypoint
+	Args []string `json:"args"`
+
+	// Attributes is parameters for the generator
+	Attributes map[string]string `json:"attributes"`
 }
 
 // ApplicationStatus defines the observed state of Application
 type ApplicationStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
+	// Domains are assigned domains for the application
+	Domains []string `json:"domains"`
+
+	// Status is the current status of the application
+	Status ApplicationStatusType `json:"status"`
+
+	// Message is the detailed status or reason for the currnt status
+	Message string `json:"message"`
 }
+
+// ApplicationStatusType is the Status enum for Application
+type ApplicationStatusType string
+
+const (
+	// ApplicationDeployed means all updated specs are applied
+	ApplicationDeployed ApplicationStatusType = "deployed"
+
+	// ApplicationProgressing means specs are being updated
+	ApplicationProgressing ApplicationStatusType = "progressing"
+
+	// ApplicationDeploymentFailed means deployment failed
+	ApplicationDeploymentFailed ApplicationStatusType = "failed"
+
+	// ApplicationError means some errors occurred in the application
+	ApplicationError ApplicationStatusType = "error"
+)
 
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
