@@ -5,7 +5,7 @@ on:
     branches: [master]
 
 jobs:
-  authserver:
+  operator:
     runs-on: ubuntu-latest
 
     steps:
