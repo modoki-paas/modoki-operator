@@ -12,6 +12,11 @@ type ApplicationSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "operator-sdk generate k8s" to regenerate code after modifying this file
 	// Add custom validation using kubebuilder tags: https://book-v1.book.kubebuilder.io/beyond_basics/generating_crd.html
+	Domains    []string          `json:"domains"`
+	Image      string            `json:"image"`
+	Command    []string          `json:"command"`
+	Args       []string          `json:"args"`
+	Attributes map[string]string `json:"attributes"`
 }
 
 // ApplicationStatus defines the observed state of Application
@@ -19,7 +24,24 @@ type ApplicationStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "operator-sdk generate k8s" to regenerate code after modifying this file
 	// Add custom validation using kubebuilder tags: https://book-v1.book.kubebuilder.io/beyond_basics/generating_crd.html
+	Domains []string              `json:"domains"`
+	Status  ApplicationStatusType `json:"status"`
+	Message string                `json:"message"`
 }
+
+// ApplicationStatusType is the Status enum for Application
+type ApplicationStatusType string
+
+const (
+	// ApplicationDeployed represents all updated specs are applied
+	ApplicationDeployed ApplicationStatusType = "deployed"
+
+	// ApplicationProgressing represents specs are being updated
+	ApplicationProgressing ApplicationStatusType = "progressing"
+
+	// ApplicationDeploymentFailed represents updates failed
+	ApplicationDeploymentFailed ApplicationStatusType = "failed"
+)
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
