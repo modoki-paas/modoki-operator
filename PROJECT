@@ -1,4 +1,4 @@
-domain: modoki.tsuzu.dev
+domain: tsuzu.dev
 layout: go.kubebuilder.io/v2
 repo: github.com/modoki-paas/modoki-operator
 resources:

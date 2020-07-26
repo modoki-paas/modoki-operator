@@ -1,4 +1,4 @@
-apiVersion: modoki.modoki.tsuzu.dev/v1alpha1
+apiVersion: modoki.tsuzu.dev/v1alpha1
 kind: Application
 metadata:
   name: application-sample

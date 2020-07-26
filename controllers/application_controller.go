@@ -34,8 +34,8 @@ type ApplicationReconciler struct {
 	Scheme *runtime.Scheme
 }
 
-// +kubebuilder:rbac:groups=modoki.modoki.tsuzu.dev,resources=applications,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=modoki.modoki.tsuzu.dev,resources=applications/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=modoki.tsuzu.dev,resources=applications,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=modoki.tsuzu.dev,resources=applications/status,verbs=get;update;patch
 
 func (r *ApplicationReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	_ = context.Background()
