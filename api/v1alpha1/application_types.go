@@ -56,6 +56,16 @@ type ApplicationStatus struct {
 
 	// Message is the detailed status or reason for the currnt status
 	Message string `json:"message"`
+
+	// Resources are the generated resources by modoki
+	Resources []ApplicationResource `json:"resources"`
+}
+
+// ApplicationResource is a resource in Kubernetes
+type ApplicationResource struct {
+	metav1.TypeMeta `json:",inline"`
+	Name            string `json:"name"`
+	Namespace       string `json:"namespace,omitempty"`
 }
 
 // ApplicationStatusType is the Status enum for Application
