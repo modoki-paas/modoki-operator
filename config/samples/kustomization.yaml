@@ -1,3 +1,4 @@
 ## This file is auto-generated, do not modify ##
 resources:
 - modoki_v1alpha1_application.yaml
+- modoki_v1alpha1_applicationtemplate.yaml
