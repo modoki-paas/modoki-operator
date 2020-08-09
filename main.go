@@ -67,11 +67,13 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err = (&controllers.ApplicationReconciler{
+	ar := &controllers.ApplicationReconciler{
 		Client: mgr.GetClient(),
 		Log:    ctrl.Log.WithName("controllers").WithName("Application"),
 		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr); err != nil {
+	}
+
+	if err = ar.SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Application")
 		os.Exit(1)
 	}

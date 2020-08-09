@@ -1,0 +1,17 @@
+syntax = "proto3";
+package webhook;
+
+option go_package = "github.com/modoki-paas/modoki-operator/proto/webhook";
+
+import "proto/common/common.proto";
+
+message EnqueueRequest {
+    common.Metadata metadata = 1;
+}
+
+message EnqueueResponse {
+}
+
+service Webhook {
+    rpc Enqueue(EnqueueRequest) returns (EnqueueResponse);
+}

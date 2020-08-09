@@ -38,10 +38,14 @@ type ApplicationReconciler struct {
 // +kubebuilder:rbac:groups=modoki.tsuzu.dev,resources=applications/status,verbs=get;update;patch
 
 func (r *ApplicationReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
-	_ = context.Background()
+	ctx := context.Background()
 	_ = r.Log.WithValues("application", req.NamespacedName)
 
 	// your logic here
+	var app modokiv1alpha1.Application
+	if err := r.Get(ctx, req.NamespacedName, &app); err != nil {
+		return ctrl.Result{}, err
+	}
 
 	return ctrl.Result{}, nil
 }

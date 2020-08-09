@@ -1,0 +1,11 @@
+syntax = "proto3";
+package common;
+
+option go_package = "github.com/modoki-paas/modoki-operator/proto/common";
+
+message Metadata {
+    string kind = 1;
+    string apiVersion = 2;
+    string name = 3;
+    string namespace = 4;
+}
