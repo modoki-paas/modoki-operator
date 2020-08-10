@@ -17,6 +17,7 @@ limitations under the License.
 package main
 
 import (
+	"context"
 	"flag"
 	"os"
 
@@ -25,10 +26,13 @@ import (
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
+	"github.com/go-logr/zapr"
 	modokiv1alpha1 "github.com/modoki-paas/modoki-operator/api/v1alpha1"
 	"github.com/modoki-paas/modoki-operator/controllers"
+	"github.com/modoki-paas/modoki-operator/handler"
 	// +kubebuilder:scaffold:imports
 )
 
@@ -46,14 +50,27 @@ func init() {
 
 func main() {
 	var metricsAddr string
+	var webhookAddr string
 	var enableLeaderElection bool
 	flag.StringVar(&metricsAddr, "metrics-addr", ":8080", "The address the metric endpoint binds to.")
+	flag.StringVar(&webhookAddr, "webhook-addr", ":5050", "The address the webhook endpoint to enqueue binds to.")
 	flag.BoolVar(&enableLeaderElection, "enable-leader-election", false,
 		"Enable leader election for controller manager. "+
 			"Enabling this will ensure there is only one active controller manager.")
 	flag.Parse()
 
-	ctrl.SetLogger(zap.New(zap.UseDevMode(true)))
+	zrlogger := zap.NewRaw(zap.UseDevMode(true))
+	logger := zapr.NewLogger(zrlogger)
+
+	ctrl.SetLogger(logger)
+
+	server := handler.NewServer(logger)
+
+	eventChan := make(chan event.GenericEvent, 1024)
+	ws := handler.NewWebhookServer(eventChan)
+	ws.Register(server)
+
+	go server.Start(context.Background(), webhookAddr)
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 		Scheme:             scheme,
@@ -73,7 +90,7 @@ func main() {
 		Scheme: mgr.GetScheme(),
 	}
 
-	if err = ar.SetupWithManager(mgr); err != nil {
+	if err = ar.SetupWithManager(mgr, eventChan); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Application")
 		os.Exit(1)
 	}
