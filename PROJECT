@@ -5,9 +5,6 @@ resources:
 - group: modoki
   kind: Application
   version: v1alpha1
-- group: modoki
-  kind: ApplicationTemplate
-  version: v1alpha1
 version: 3-alpha
 plugins:
   go.operator-sdk.io/v2-alpha: {}
