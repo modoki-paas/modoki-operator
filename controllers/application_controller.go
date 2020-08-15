@@ -33,7 +33,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	modokiv1alpha1 "github.com/modoki-paas/modoki-operator/api/v1alpha1"
-	"github.com/modoki-paas/modoki-operator/generator"
+	"github.com/modoki-paas/modoki-operator/generators"
 )
 
 // ApplicationReconciler reconciles a Application object
@@ -41,7 +41,7 @@ type ApplicationReconciler struct {
 	client.Client
 	Log       logr.Logger
 	Scheme    *runtime.Scheme
-	Generator generator.Generator
+	Generator generators.Generator
 }
 
 // +kubebuilder:rbac:groups=modoki.tsuzu.dev,resources=applications,verbs=get;list;watch;create;update;patch;delete
