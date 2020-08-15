@@ -17,7 +17,6 @@ limitations under the License.
 package main
 
 import (
-	"context"
 	"flag"
 	"os"
 
@@ -32,7 +31,6 @@ import (
 	"github.com/go-logr/zapr"
 	modokiv1alpha1 "github.com/modoki-paas/modoki-operator/api/v1alpha1"
 	"github.com/modoki-paas/modoki-operator/controllers"
-	"github.com/modoki-paas/modoki-operator/handler"
 	// +kubebuilder:scaffold:imports
 )
 
@@ -64,13 +62,7 @@ func main() {
 
 	ctrl.SetLogger(logger)
 
-	server := handler.NewServer(logger)
-
 	eventChan := make(chan event.GenericEvent, 1024)
-	ws := handler.NewWebhookServer(eventChan)
-	ws.Register(server)
-
-	go server.Start(context.Background(), webhookAddr)
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 		Scheme:             scheme,
