@@ -105,6 +105,13 @@ func (r *ApplicationReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error)
 			continue
 		}
 
+		diff, err := client.MergeFrom(current).Data(obj)
+		if err != nil {
+			log.Error(err, "merge from error")
+		} else {
+			log.Info("diff is ...", "diff", string(diff))
+		}
+
 		if err := r.Client.Patch(ctx, obj, client.MergeFrom(current)); err != nil {
 			log.Error(
 				err,
