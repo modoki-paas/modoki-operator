@@ -123,6 +123,13 @@ func (r *ApplicationReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error)
 		}
 	}
 
+	app.Status.Status = modokiv1alpha1.ApplicationDeployed
+	if err := r.Client.Update(ctx, &app); err != nil {
+		log.Error(err, "failed to update status", "status", app.Status.Status)
+
+		return ctrl.Result{Requeue: true}, err
+	}
+
 	return ctrl.Result{}, nil
 }
 
