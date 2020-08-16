@@ -19,6 +19,7 @@ package main
 import (
 	"flag"
 	"os"
+	_ "time/tzdata"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"

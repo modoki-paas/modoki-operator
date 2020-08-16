@@ -20,9 +20,15 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build -a -o manager 
 
 # Use distroless as minimal base image to package the manager binary
 # Refer to https://github.com/GoogleContainerTools/distroless for more details
-FROM gcr.io/distroless/static:nonroot
+FROM node:12.18.3-slim
 WORKDIR /
+COPY cdk8s-template .
+RUN cd /cdk8s-template && npm ci
+
 COPY --from=builder /workspace/manager .
+
+COPY docker-entrypoint.sh /
+
 USER nonroot:nonroot
 
-ENTRYPOINT ["/manager"]
+ENTRYPOINT ["/docker-entrypoint.sh"]
