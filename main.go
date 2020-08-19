@@ -32,6 +32,7 @@ import (
 	"github.com/go-logr/zapr"
 	modokiv1alpha1 "github.com/modoki-paas/modoki-operator/api/v1alpha1"
 	"github.com/modoki-paas/modoki-operator/controllers"
+	"github.com/modoki-paas/modoki-operator/generators"
 	// +kubebuilder:scaffold:imports
 )
 
@@ -45,6 +46,13 @@ func init() {
 
 	utilruntime.Must(modokiv1alpha1.AddToScheme(scheme))
 	// +kubebuilder:scaffold:scheme
+}
+
+func newGenerator() generators.Generator {
+	generator := generators.NewCommandGenerator("node", "main.js")
+	generator.SetWorkingDirectory("../cdk8s-template")
+
+	return generator
 }
 
 func main() {
@@ -78,9 +86,10 @@ func main() {
 	}
 
 	ar := &controllers.ApplicationReconciler{
-		Client: mgr.GetClient(),
-		Log:    ctrl.Log.WithName("controllers").WithName("Application"),
-		Scheme: mgr.GetScheme(),
+		Client:    mgr.GetClient(),
+		Log:       ctrl.Log.WithName("controllers").WithName("Application"),
+		Scheme:    mgr.GetScheme(),
+		Generator: newGenerator(),
 	}
 
 	if err = ar.SetupWithManager(mgr, eventChan); err != nil {

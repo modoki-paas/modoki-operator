@@ -8,5 +8,5 @@ import (
 )
 
 type Generator interface {
-	Generate(ctx context.Context, spec *v1alpha1.ApplicationSpec) ([]*unstructured.Unstructured, error)
+	Generate(ctx context.Context, app *v1alpha1.Application) ([]*unstructured.Unstructured, error)
 }

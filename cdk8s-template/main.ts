@@ -1,4 +1,5 @@
 import { App } from 'cdk8s';
+import * as yaml from 'yaml';
 import MyChart, { Config } from "./chart";
 import { Application } from "./application";
 import { readFileSync } from 'fs';
@@ -19,6 +20,6 @@ const readStdinAll = async () => {
   const app = new App();
   const array = new MyChart(app, `modoki-${prop.metadata.name}`, {app: prop, config}).toJson();
 
-  console.log(JSON.stringify(array));
+  console.log(array.map(x => yaml.stringify(x)).join("\n---\n"));
 })();
 

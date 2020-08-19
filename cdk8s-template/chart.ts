@@ -7,6 +7,7 @@ export interface Config {
     ingressNamespace: string;
     tlsSecretName: string;
     serviceDomain: string;
+    ingressAnnotations: { [key: string]: string };
 };
 
 interface MyChartProp {
@@ -23,6 +24,9 @@ export default class MyChart extends Chart {
         ingressNamespace: "modoki-operator-system",
         tlsSecretName: "ingress-secret",
         serviceDomain: "svc.cluster.local",
+        ingressAnnotations: {
+            "cert-manager.io/cluster-issuer": "letsencrypt",
+        }
     }
 
     const config: Config = {
@@ -33,7 +37,6 @@ export default class MyChart extends Chart {
     config.ingressNamespace = config.ingressNamespace ?? "modoki-operator-system";
     config.tlsSecretName = config.tlsSecretName ?? "ingress-secret";
     config.serviceDomain = config.serviceDomain ?? "svc.cluster.local";
-
 
     const labels = {
         "app": `modoki-${app.metadata.name}-app`,
@@ -57,6 +60,7 @@ export default class MyChart extends Chart {
             template: {
                 metadata: { labels },
                 spec: {
+                    automountServiceAccountToken: false,
                     containers: [
                         {
                             name: "main",
@@ -106,6 +110,10 @@ export default class MyChart extends Chart {
     new k8s.Ingress(this, "ingress", {
         metadata: {
             namespace: config.ingressNamespace,
+            annotations: {
+                ...annotations,
+                ...config.ingressAnnotations,
+            }
         },
         spec: {
             backend: {
