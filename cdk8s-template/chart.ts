@@ -25,7 +25,7 @@ export default class MyChart extends Chart {
         tlsSecretName: "ingress-secret",
         serviceDomain: "svc.cluster.local",
         ingressAnnotations: {
-            "cert-manager.io/cluster-issuer": "letsencrypt",
+            // "cert-manager.io/cluster-issuer": "letsencrypt",
         }
     }
 
