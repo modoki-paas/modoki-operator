@@ -30,6 +30,4 @@ COPY --from=builder /workspace/manager .
 
 COPY docker-entrypoint.sh /
 
-USER nonroot:nonroot
-
 ENTRYPOINT ["/docker-entrypoint.sh"]
