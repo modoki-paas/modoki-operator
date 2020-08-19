@@ -60,7 +60,7 @@ func (r *ApplicationReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error)
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Minute)
 	defer cancel()
 
-	objs, err := r.Generator.Generate(ctx, &app.Spec)
+	objs, err := r.Generator.Generate(ctx, &app)
 
 	if err != nil {
 		log.Error(err, "failed to generate yaml")
