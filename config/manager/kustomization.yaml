@@ -5,4 +5,4 @@ kind: Kustomization
 images:
 - name: controller
   newName: modokipaas/modoki-operator
-  newTag: sha-aac37cd
+  newTag: sha-62469f5

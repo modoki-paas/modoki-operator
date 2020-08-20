@@ -60,9 +60,6 @@ spec:
               description: Image is the url for Docker registry
               type: string
           required:
-          - args
-          - attributes
-          - command
           - domains
           - image
           type: object

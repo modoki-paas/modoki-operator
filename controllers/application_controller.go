@@ -60,6 +60,7 @@ func (r *ApplicationReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error)
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Minute)
 	defer cancel()
 
+	log.Info("generator started")
 	objs, err := r.Generator.Generate(ctx, &app)
 
 	if err != nil {
@@ -67,6 +68,7 @@ func (r *ApplicationReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error)
 
 		return ctrl.Result{Requeue: true}, err
 	}
+	log.Info("generator returned", "items", len(objs))
 
 	for _, obj := range objs {
 		gvk := schema.FromAPIVersionAndKind(
