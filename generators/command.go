@@ -77,6 +77,7 @@ func (g *CommandGenerator) Generate(ctx context.Context, app *v1alpha1.Applicati
 	}()
 
 	res, err := yaml.ParseUnstructuredAll(stdout)
+	wg.Wait()
 
 	if execErr != nil {
 		return nil, execErr
