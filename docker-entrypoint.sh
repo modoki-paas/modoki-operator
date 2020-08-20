@@ -5,4 +5,4 @@ set -eu
 cd /cdk8s-template && npm run build
 
 # Start controller
-/manager
+/manager $@
