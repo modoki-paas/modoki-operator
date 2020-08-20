@@ -35,13 +35,16 @@ type ApplicationSpec struct {
 	Image string `json:"image"`
 
 	// Command is an entrypoint array
-	Command []string `json:"command"`
+	// +kubebuilder:validation:Optional
+	Command []string `json:"command,omitempty"`
 
 	// Args is the arguments to the entrypoint
-	Args []string `json:"args"`
+	// +kubebuilder:validation:Optional
+	Args []string `json:"args,omitempty"`
 
 	// Attributes is parameters for the generator
-	Attributes map[string]string `json:"attributes"`
+	// +kubebuilder:validation:Optional
+	Attributes map[string]string `json:"attributes,omitempty"`
 }
 
 // ApplicationStatus defines the observed state of Application

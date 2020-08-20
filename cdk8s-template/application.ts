@@ -3,9 +3,9 @@
 export interface ApplicationSpec {
     domains: string[];
     image: string;
-    command: string[];
-    args: string[];
-    attributes: {[key: string]: string};
+    command?: string[];
+    args?: string[];
+    attributes?: {[key: string]: string};
 };
 
 export interface ApplicationStatus {
