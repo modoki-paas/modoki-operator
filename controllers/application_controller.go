@@ -39,7 +39,7 @@ import (
 )
 
 const (
-	lastAppliedLabelKey = "kubectl.kubernetes.io/last-applied-configuration"
+	lastAppliedAnnotationsKey = "kubectl.kubernetes.io/last-applied-configuration"
 )
 
 // ApplicationReconciler reconciles a Application object
@@ -77,7 +77,7 @@ func (r *ApplicationReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error)
 	log.Info("generator returned", "items", len(objs))
 
 	for _, obj := range objs {
-		labels := obj.GetLabels()
+		annotations := obj.GetAnnotations()
 		buf := bytes.NewBuffer(nil)
 		if err := unstructured.UnstructuredJSONScheme.Encode(obj, buf); err != nil {
 			log.Error(err, "the object cannot be marshaled", "obj", obj)
@@ -85,8 +85,8 @@ func (r *ApplicationReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error)
 			return ctrl.Result{Requeue: false}, err
 		}
 
-		labels[lastAppliedLabelKey] = buf.String()
-		obj.SetLabels(labels)
+		annotations[lastAppliedAnnotationsKey] = buf.String()
+		obj.SetAnnotations(annotations)
 
 		gvk := schema.FromAPIVersionAndKind(
 			obj.GetAPIVersion(), obj.GetKind(),
@@ -125,7 +125,7 @@ func (r *ApplicationReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error)
 		}
 
 		var lastApplied *unstructured.Unstructured
-		if lastAppliedJSON, ok := current.GetLabels()[lastAppliedLabelKey]; ok {
+		if lastAppliedJSON, ok := current.GetLabels()[lastAppliedAnnotationsKey]; ok {
 			lastApplied, err = yaml.ParseUnstructured([]byte(lastAppliedJSON))
 
 			if err != nil {
