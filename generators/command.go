@@ -64,6 +64,7 @@ func (g *CommandGenerator) Generate(ctx context.Context, app *v1alpha1.Applicati
 		}
 
 		done := make(chan struct{})
+		defer close(done)
 		go func() {
 			select {
 			case <-ctx.Done():
@@ -73,7 +74,6 @@ func (g *CommandGenerator) Generate(ctx context.Context, app *v1alpha1.Applicati
 		}()
 
 		execErr = cmd.Wait()
-		close(done)
 	}()
 
 	res, err := yaml.ParseUnstructuredAll(stdout)
@@ -83,7 +83,7 @@ func (g *CommandGenerator) Generate(ctx context.Context, app *v1alpha1.Applicati
 		return nil, execErr
 	}
 	if err != nil {
-		return nil, execErr
+		return nil, err
 	}
 
 	return res, nil

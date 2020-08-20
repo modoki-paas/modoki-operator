@@ -50,7 +50,7 @@ func init() {
 
 func newGenerator() generators.Generator {
 	generator := generators.NewCommandGenerator("node", "main.js")
-	generator.SetWorkingDirectory("../cdk8s-template")
+	generator.SetWorkingDirectory("/cdk8s-template")
 
 	return generator
 }
