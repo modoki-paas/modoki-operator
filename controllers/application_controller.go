@@ -131,6 +131,8 @@ func (r *ApplicationReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error)
 			if err != nil {
 				return ctrl.Result{Requeue: false}, err
 			}
+		} else {
+			lastApplied = current
 		}
 
 		diff, err := client.MergeFrom(lastApplied).Data(obj)
