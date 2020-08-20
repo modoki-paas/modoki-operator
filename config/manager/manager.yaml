@@ -34,4 +34,25 @@ spec:
           requests:
             cpu: 500m
             memory: 200Mi
+        env:
+        - name: CONFIG_PATH
+          value: /etc/cdk8s/config.json
+        volumeMounts:
+        - mountPath: /etc/cdk8s
+          name: cdk8s-config
       terminationGracePeriodSeconds: 10
+      volumes:
+        - name: cdk8s-config
+          configMap:
+            name: cdk8s-config
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cdk8s-config
+  namespace: system
+  labels:
+    control-plane: controller-manager
+data:
+  config.json: |
+    {}

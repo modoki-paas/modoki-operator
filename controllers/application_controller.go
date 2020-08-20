@@ -17,6 +17,7 @@ limitations under the License.
 package controllers
 
 import (
+	"bytes"
 	"context"
 	"time"
 
@@ -34,6 +35,11 @@ import (
 
 	modokiv1alpha1 "github.com/modoki-paas/modoki-operator/api/v1alpha1"
 	"github.com/modoki-paas/modoki-operator/generators"
+	"github.com/modoki-paas/modoki-operator/pkg/yaml"
+)
+
+const (
+	lastAppliedLabelKey = "kubectl.kubernetes.io/last-applied-configuration"
 )
 
 // ApplicationReconciler reconciles a Application object
@@ -71,6 +77,17 @@ func (r *ApplicationReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error)
 	log.Info("generator returned", "items", len(objs))
 
 	for _, obj := range objs {
+		labels := obj.GetLabels()
+		buf := bytes.NewBuffer(nil)
+		if err := unstructured.UnstructuredJSONScheme.Encode(obj, buf); err != nil {
+			log.Error(err, "the object cannot be marshaled", "obj", obj)
+
+			return ctrl.Result{Requeue: false}, err
+		}
+
+		labels[lastAppliedLabelKey] = buf.String()
+		obj.SetLabels(labels)
+
 		gvk := schema.FromAPIVersionAndKind(
 			obj.GetAPIVersion(), obj.GetKind(),
 		)
@@ -107,14 +124,23 @@ func (r *ApplicationReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error)
 			continue
 		}
 
-		diff, err := client.MergeFrom(current).Data(obj)
+		var lastApplied *unstructured.Unstructured
+		if lastAppliedJSON, ok := current.GetLabels()[lastAppliedLabelKey]; ok {
+			lastApplied, err = yaml.ParseUnstructured([]byte(lastAppliedJSON))
+
+			if err != nil {
+				return ctrl.Result{Requeue: false}, err
+			}
+		}
+
+		diff, err := client.MergeFrom(lastApplied).Data(obj)
 		if err != nil {
 			log.Error(err, "merge from error")
 		} else {
 			log.Info("diff is ...", "diff", string(diff))
 		}
 
-		if err := r.Client.Patch(ctx, obj, client.MergeFrom(current)); err != nil {
+		if err := r.Client.Patch(ctx, obj, client.MergeFrom(lastApplied)); err != nil {
 			log.Error(
 				err,
 				"failed to patch the child resource",
