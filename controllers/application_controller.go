@@ -88,6 +88,8 @@ func (r *ApplicationReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error)
 		annotations[lastAppliedAnnotationsKey] = buf.String()
 		obj.SetAnnotations(annotations)
 
+		ctrl.SetControllerReference(&app, obj, r.Scheme)
+
 		gvk := schema.FromAPIVersionAndKind(
 			obj.GetAPIVersion(), obj.GetKind(),
 		)
