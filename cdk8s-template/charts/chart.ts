@@ -1,7 +1,7 @@
 import { Construct } from 'constructs';
 import { Chart } from 'cdk8s';
-import * as k8s from './imports/k8s';
-import { Application } from './application';
+import * as k8s from '../imports/k8s';
+import { Application } from '../application';
 
 export interface Config {
     ingressNamespace: string;
@@ -25,7 +25,7 @@ export default class MyChart extends Chart {
         tlsSecretName: "ingress-secret",
         serviceDomain: "svc.cluster.local",
         ingressAnnotations: {
-            // "cert-manager.io/cluster-issuer": "letsencrypt",
+            "kubernetes.io/ingress.class": "nginx",
         }
     }
 
@@ -96,10 +96,13 @@ export default class MyChart extends Chart {
         },
     });
 
+    const sanitizeName = (s: string) => s.replace(/-/g, "--");
+
     const externalSVC = new k8s.Service(this, "external-svc", {
         metadata: {
             ...metadata,
             namespace: config.ingressNamespace,
+            name: "modoki-extsvc-" + sanitizeName(app.metadata.namespace) + "-" + sanitizeName(app.metadata.name),
         },
         spec: {
             externalName: `${svc.name}.${app.metadata.namespace}.${config.serviceDomain}`,
@@ -109,7 +112,9 @@ export default class MyChart extends Chart {
 
     new k8s.Ingress(this, "ingress", {
         metadata: {
+            ...metadata,
             namespace: config.ingressNamespace,
+            name: "modoki-ingress-" + sanitizeName(app.metadata.namespace) + "-" + sanitizeName(app.metadata.name),
             annotations: {
                 ...annotations,
                 ...config.ingressAnnotations,

@@ -88,7 +88,11 @@ func (r *ApplicationReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error)
 		annotations[lastAppliedAnnotationsKey] = buf.String()
 		obj.SetAnnotations(annotations)
 
-		ctrl.SetControllerReference(&app, obj, r.Scheme)
+		if err := ctrl.SetControllerReference(&app, obj, r.Scheme); err != nil {
+			log.Error(err, "failed to set controller reference", "info", obj.GetKind()+"/"+obj.GetNamespace()+"/"+obj.GetName())
+
+			return ctrl.Result{Requeue: false}, err
+		}
 
 		gvk := schema.FromAPIVersionAndKind(
 			obj.GetAPIVersion(), obj.GetKind(),

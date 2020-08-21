@@ -1,6 +1,6 @@
 import { App } from 'cdk8s';
 import * as yaml from 'yaml';
-import MyChart, { Config } from "./chart";
+import MyChart, { Config } from "./charts/chart";
 import { Application } from "./application";
 import { readFileSync } from 'fs';
 
