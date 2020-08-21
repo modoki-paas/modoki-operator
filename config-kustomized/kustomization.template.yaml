@@ -1,0 +1,9 @@
+bases:
+  - ../config/default
+
+configMapGenerator:
+- behavior: replace
+  name: modoki-operator-cdk8s-chart
+  namespace: modoki-operator-system
+  files:
+    - ../cdk8s-template/charts/chart.ts

@@ -6,8 +6,3 @@ images:
 - name: controller
   newName: modokipaas/modoki-operator
   newTag: sha-81ec50c
-
-configMapGenerator:
-- name: cdk8s-chart
-  files:
-    - ../../cdk8s-template/charts/chart.ts

@@ -47,8 +47,9 @@ uninstall: manifests kustomize
 
 # Deploy controller in the configured Kubernetes cluster in ~/.kube/config
 deploy: manifests kustomize
-	cd config/manager && $(KUSTOMIZE) edit set image controller=${IMG}
-	$(KUSTOMIZE) build config/default | kubectl apply -f -
+	test -f config-kustomized/kustomization.yaml || cp config-kustomized/kustomization.template.yaml config-kustomized/kustomization.yaml
+	cd config-kustomized && $(KUSTOMIZE) edit set image controller=${IMG}
+	$(KUSTOMIZE) build --load_restrictor=LoadRestrictionsNone config-kustomized | kubectl apply -f -
 
 # Generate manifests e.g. CRD, RBAC etc.
 manifests: controller-gen

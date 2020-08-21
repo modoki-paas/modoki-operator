@@ -36,7 +36,7 @@ func ParseUnstructuredAll(r io.ReadCloser) ([]*unstructured.Unstructured, error)
 func ParseUnstructured(b []byte) (*unstructured.Unstructured, error) {
 	yamlDecoder := yaml.NewDecodingSerializer(unstructured.UnstructuredJSONScheme)
 
-	var into *unstructured.Unstructured
+	into := &unstructured.Unstructured{}
 	_, _, err := yamlDecoder.Decode(b, nil, into)
 
 	if err != nil {
