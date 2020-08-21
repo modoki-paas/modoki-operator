@@ -39,7 +39,7 @@ spec:
           value: /etc/cdk8s/config.json
         volumeMounts:
         - mountPath: /cdk8s-template/charts
-          name: cdk8s-config
+          name: cdk8s-chart
       terminationGracePeriodSeconds: 10
       volumes:
         - name: cdk8s-config
