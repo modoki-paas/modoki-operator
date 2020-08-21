@@ -38,7 +38,7 @@ spec:
         - name: CONFIG_PATH
           value: /etc/cdk8s/config.json
         volumeMounts:
-        - mountPath: /etc/cdk8s
+        - mountPath: /cdk8s-template/charts
           name: cdk8s-config
       terminationGracePeriodSeconds: 10
       volumes:
