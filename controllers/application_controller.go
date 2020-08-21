@@ -131,7 +131,7 @@ func (r *ApplicationReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error)
 		}
 
 		var lastApplied *unstructured.Unstructured
-		if lastAppliedJSON, ok := current.GetLabels()[lastAppliedAnnotationsKey]; ok {
+		if lastAppliedJSON, ok := current.GetAnnotations()[lastAppliedAnnotationsKey]; ok {
 			lastApplied, err = yaml.ParseUnstructured([]byte(lastAppliedJSON))
 
 			if err != nil {
