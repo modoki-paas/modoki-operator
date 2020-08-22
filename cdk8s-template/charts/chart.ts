@@ -34,12 +34,8 @@ export default class MyChart extends Chart {
         ...rawConfig
     };
 
-    config.ingressNamespace = config.ingressNamespace ?? "modoki-operator-system";
-    config.tlsSecretName = config.tlsSecretName ?? "ingress-secret";
-    config.serviceDomain = config.serviceDomain ?? "svc.cluster.local";
-
     const labels = {
-        "app": `modoki-${app.metadata.name}-app`,
+        "modoki-app": `${app.metadata.name}`,
     };
     const annotations = {
         "modoki.tsuzu.dev": `modoki-${app.metadata.name}-app`,
@@ -96,41 +92,30 @@ export default class MyChart extends Chart {
         },
     });
 
-    const sanitizeName = (s: string) => s.replace(/-/g, "--");
-
-    const externalSVC = new k8s.Service(this, "external-svc", {
-        metadata: {
-            ...metadata,
-            namespace: config.ingressNamespace,
-            name: "modoki-extsvc-" + sanitizeName(app.metadata.namespace) + "-" + sanitizeName(app.metadata.name),
-        },
-        spec: {
-            externalName: `${svc.name}.${app.metadata.namespace}.${config.serviceDomain}`,
-            type: "ExternalName",
-        },
-    });
-
     new k8s.Ingress(this, "ingress", {
         metadata: {
             ...metadata,
-            namespace: config.ingressNamespace,
-            name: "modoki-ingress-" + sanitizeName(app.metadata.namespace) + "-" + sanitizeName(app.metadata.name),
             annotations: {
                 ...annotations,
                 ...config.ingressAnnotations,
             }
         },
         spec: {
-            backend: {
-                serviceName: externalSVC.name,
-                servicePort: 80,
-            },
-            tls: [
-                {
-                    hosts: app.spec.domains,
-                    secretName: config.tlsSecretName,
+            rules: app.spec.domains.map(x => ({
+                host: x,
+                http: {
+                    paths: [{
+                        backend: {
+                            serviceName: svc.name,
+                            servicePort: 80,
+                        },
+                        path: "/",
+                    }],
                 }
-            ]
+            })),
+            tls: [{
+                hosts: app.spec.domains,
+            }]
         }
     })
 

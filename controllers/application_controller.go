@@ -19,6 +19,8 @@ package controllers
 import (
 	"bytes"
 	"context"
+	"encoding/json"
+	"fmt"
 	"time"
 
 	"github.com/go-logr/logr"
@@ -41,6 +43,12 @@ import (
 const (
 	lastAppliedAnnotationsKey = "kubectl.kubernetes.io/last-applied-configuration"
 )
+
+func DebugPrint(obj interface{}) string {
+	b, _ := json.Marshal(obj)
+
+	return string(b)
+}
 
 // ApplicationReconciler reconciles a Application object
 type ApplicationReconciler struct {
@@ -132,6 +140,7 @@ func (r *ApplicationReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error)
 
 		var lastApplied *unstructured.Unstructured
 		if lastAppliedJSON, ok := current.GetAnnotations()[lastAppliedAnnotationsKey]; ok {
+			fmt.Println(lastAppliedJSON)
 			lastApplied, err = yaml.ParseUnstructured([]byte(lastAppliedJSON))
 
 			if err != nil {
@@ -140,6 +149,10 @@ func (r *ApplicationReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error)
 		} else {
 			lastApplied = current
 		}
+
+		fmt.Println(DebugPrint(lastApplied))
+		fmt.Println(DebugPrint(current))
+		fmt.Println(DebugPrint(obj))
 
 		diff, err := client.MergeFrom(lastApplied).Data(obj)
 		if err != nil {

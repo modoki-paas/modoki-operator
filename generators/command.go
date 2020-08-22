@@ -1,8 +1,10 @@
 package generators
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"os/exec"
 	"sync"
 
@@ -37,6 +39,9 @@ func (g *CommandGenerator) Generate(ctx context.Context, app *v1alpha1.Applicati
 		return nil, err
 	}
 	defer stdin.Close()
+
+	stderr := bytes.NewBuffer(nil)
+	cmd.Stderr = stderr
 
 	go func() {
 		json.NewEncoder(stdin).Encode(app)
@@ -80,10 +85,15 @@ func (g *CommandGenerator) Generate(ctx context.Context, app *v1alpha1.Applicati
 	wg.Wait()
 
 	if execErr != nil {
-		return nil, execErr
+		err = execErr
 	}
+
 	if err != nil {
-		return nil, err
+		if stderr.Len() == 0 {
+			return nil, err
+		}
+
+		return nil, fmt.Errorf("%+v: %+v", execErr, stderr.String())
 	}
 
 	return res, nil
