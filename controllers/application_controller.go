@@ -155,7 +155,7 @@ func (r *ApplicationReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error)
 				return ctrl.Result{Requeue: false}, err
 			}
 
-			if err := r.setMetadata(&app, obj); err != nil {
+			if err := r.setMetadata(&app, lastApplied); err != nil {
 				return ctrl.Result{Requeue: false}, err
 			}
 		} else {
