@@ -20,10 +20,10 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"fmt"
 	"time"
 
 	"github.com/go-logr/logr"
+	"github.com/labstack/gommon/log"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -35,6 +35,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/source"
 
+	"github.com/modoki-paas/modoki-operator/api/v1alpha1"
 	modokiv1alpha1 "github.com/modoki-paas/modoki-operator/api/v1alpha1"
 	"github.com/modoki-paas/modoki-operator/generators"
 	"github.com/modoki-paas/modoki-operator/pkg/yaml"
@@ -61,6 +62,27 @@ type ApplicationReconciler struct {
 // +kubebuilder:rbac:groups=modoki.tsuzu.dev,resources=applications,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=modoki.tsuzu.dev,resources=applications/status,verbs=get;update;patch
 
+func (r *ApplicationReconciler) setMetadata(app *v1alpha1.Application, obj *unstructured.Unstructured) error {
+	annotations := obj.GetAnnotations()
+	buf := bytes.NewBuffer(nil)
+	if err := unstructured.UnstructuredJSONScheme.Encode(obj, buf); err != nil {
+		log.Error(err, "the object cannot be marshaled", "obj", obj)
+
+		return err
+	}
+
+	annotations[lastAppliedAnnotationsKey] = buf.String()
+	obj.SetAnnotations(annotations)
+
+	if err := ctrl.SetControllerReference(app, obj, r.Scheme); err != nil {
+		log.Error(err, "failed to set controller reference", "info", obj.GetKind()+"/"+obj.GetNamespace()+"/"+obj.GetName())
+
+		return err
+	}
+
+	return nil
+}
+
 func (r *ApplicationReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	ctx := context.Background()
 	log := r.Log.WithValues("application", req.NamespacedName)
@@ -85,20 +107,7 @@ func (r *ApplicationReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error)
 	log.Info("generator returned", "items", len(objs))
 
 	for _, obj := range objs {
-		annotations := obj.GetAnnotations()
-		buf := bytes.NewBuffer(nil)
-		if err := unstructured.UnstructuredJSONScheme.Encode(obj, buf); err != nil {
-			log.Error(err, "the object cannot be marshaled", "obj", obj)
-
-			return ctrl.Result{Requeue: false}, err
-		}
-
-		annotations[lastAppliedAnnotationsKey] = buf.String()
-		obj.SetAnnotations(annotations)
-
-		if err := ctrl.SetControllerReference(&app, obj, r.Scheme); err != nil {
-			log.Error(err, "failed to set controller reference", "info", obj.GetKind()+"/"+obj.GetNamespace()+"/"+obj.GetName())
-
+		if err := r.setMetadata(&app, obj); err != nil {
 			return ctrl.Result{Requeue: false}, err
 		}
 
@@ -140,19 +149,18 @@ func (r *ApplicationReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error)
 
 		var lastApplied *unstructured.Unstructured
 		if lastAppliedJSON, ok := current.GetAnnotations()[lastAppliedAnnotationsKey]; ok {
-			fmt.Println(lastAppliedJSON)
 			lastApplied, err = yaml.ParseUnstructured([]byte(lastAppliedJSON))
 
 			if err != nil {
 				return ctrl.Result{Requeue: false}, err
 			}
+
+			if err := r.setMetadata(&app, obj); err != nil {
+				return ctrl.Result{Requeue: false}, err
+			}
 		} else {
 			lastApplied = current
 		}
-
-		fmt.Println(DebugPrint(lastApplied))
-		fmt.Println(DebugPrint(current))
-		fmt.Println(DebugPrint(obj))
 
 		diff, err := client.MergeFrom(lastApplied).Data(obj)
 		if err != nil {
