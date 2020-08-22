@@ -19,7 +19,6 @@ package controllers
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"time"
 
 	"github.com/go-logr/logr"
@@ -44,12 +43,6 @@ import (
 const (
 	lastAppliedAnnotationsKey = "kubectl.kubernetes.io/last-applied-configuration"
 )
-
-func DebugPrint(obj interface{}) string {
-	b, _ := json.Marshal(obj)
-
-	return string(b)
-}
 
 // ApplicationReconciler reconciles a Application object
 type ApplicationReconciler struct {
@@ -164,9 +157,13 @@ func (r *ApplicationReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error)
 
 		diff, err := client.MergeFrom(lastApplied).Data(obj)
 		if err != nil {
-			log.Error(err, "merge from error")
-		} else {
-			log.Info("diff is ...", "diff", string(diff))
+			log.Error(err, "failed to generate diff", "lastApplied", lastApplied, "new", obj)
+
+			return ctrl.Result{Requeue: false}, err
+		}
+
+		if len(diff) <= 2 { // {}
+			continue // no difference
 		}
 
 		if err := r.Client.Patch(ctx, obj, client.MergeFrom(lastApplied)); err != nil {
