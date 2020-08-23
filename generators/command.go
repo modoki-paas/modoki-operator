@@ -96,5 +96,9 @@ func (g *CommandGenerator) Generate(ctx context.Context, app *v1alpha1.Applicati
 		return nil, fmt.Errorf("%+v: %+v", execErr, stderr.String())
 	}
 
+	if len(res) == 0 && stderr.Len() != 0 {
+		return nil, fmt.Errorf("%s", stderr.String())
+	}
+
 	return res, nil
 }

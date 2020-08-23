@@ -5,6 +5,8 @@ import { Application } from '../application';
 
 export interface Config {
     ingressNamespace: string;
+    oauth2ServiceName: string;
+    oauth2ServiceNamespace: string;
     tlsSecretName: string;
     serviceDomain: string;
     ingressAnnotations: { [key: string]: string };
@@ -22,6 +24,8 @@ export default class MyChart extends Chart {
 
     const defaultConfig: Config = {
         ingressNamespace: "modoki-operator-system",
+        oauth2ServiceName: "oauth2-proxy",
+        oauth2ServiceNamespace: "modoki-operator-system",
         tlsSecretName: "ingress-secret",
         serviceDomain: "svc.cluster.local",
         ingressAnnotations: {
@@ -33,6 +37,13 @@ export default class MyChart extends Chart {
         ...defaultConfig,
         ...rawConfig
     };
+
+    const oauth2Injection = (app.spec.attributes?.["modoki.tsuzu.dev/oauth2"] ?? "") === "default";
+
+    if(oauth2Injection) {
+        config.ingressAnnotations["nginx.ingress.kubernetes.io/auth-url"] = "https://$host/oauth2/auth"
+        config.ingressAnnotations["nginx.ingress.kubernetes.io/auth-signin"] = "https://$host/oauth2/start?rd=$escaped_request_uri"
+    }
 
     const labels = {
         "modoki-app": `${app.metadata.name}`,
@@ -117,7 +128,44 @@ export default class MyChart extends Chart {
                 hosts: app.spec.domains,
             }]
         }
-    })
+    });
+
+    if (oauth2Injection) {
+        const svc = new k8s.Service(this, "oauth2-service", {
+            metadata,
+            spec: {
+                type: "ExternalName",
+                externalName: `${config.oauth2ServiceName}.${config.oauth2ServiceNamespace}.${config.serviceDomain}`,
+            },
+        });
+
+        new k8s.Ingress(this, "ingress", {
+            metadata: {
+                ...metadata,
+                annotations: {
+                    ...annotations,
+                    ...config.ingressAnnotations,
+                }
+            },
+            spec: {
+                rules: app.spec.domains.map(x => ({
+                    host: x,
+                    http: {
+                        paths: [{
+                            backend: {
+                                serviceName: svc.name,
+                                servicePort: 4180,
+                            },
+                            path: "/oauth2",
+                        }],
+                    }
+                })),
+                tls: [{
+                    hosts: app.spec.domains,
+                }]
+            }
+        })
+    }
 
     // define resources here
 
