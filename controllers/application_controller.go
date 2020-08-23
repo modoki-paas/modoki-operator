@@ -19,6 +19,7 @@ package controllers
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/go-logr/logr"
@@ -76,7 +77,7 @@ func (r *ApplicationReconciler) setMetadata(app *v1alpha1.Application, obj *unst
 	return nil
 }
 
-func (r *ApplicationReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
+func (r *ApplicationReconciler) Reconcile(req ctrl.Request) (res ctrl.Result, err error) {
 	ctx := context.Background()
 	log := r.Log.WithValues("application", req.NamespacedName)
 
@@ -85,6 +86,20 @@ func (r *ApplicationReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error)
 	if err := r.Get(ctx, req.NamespacedName, &app); err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
+
+	defer func() {
+		if err != nil {
+			copied := app.DeepCopy()
+			copied.Status.Status = modokiv1alpha1.ApplicationDeploymentFailed
+			copied.Status.Message = err.Error()
+
+			if err := r.Client.Patch(ctx, copied, client.MergeFrom(&app)); err != nil {
+				log.Error(err, "failed to update status", "status", app.Status.Status)
+
+				res.Requeue = true
+			}
+		}
+	}()
 
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Minute)
 	defer cancel()
@@ -95,10 +110,11 @@ func (r *ApplicationReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error)
 	if err != nil {
 		log.Error(err, "failed to generate yaml")
 
-		return ctrl.Result{Requeue: true}, err
+		return ctrl.Result{Requeue: true}, fmt.Errorf("failed to generate yaml: %w", err)
 	}
 	log.Info("generator returned", "items", len(objs))
 
+	resources := make([]v1alpha1.ApplicationResource, 0, len(objs))
 	for _, obj := range objs {
 		if err := r.setMetadata(&app, obj); err != nil {
 			return ctrl.Result{Requeue: false}, err
@@ -120,11 +136,11 @@ func (r *ApplicationReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error)
 			if !apierrors.IsNotFound(err) {
 				log.Error(
 					err,
-					"failed to find an child resource",
+					"failed to find a child resource",
 					"type", gvk, "name", obj.GetName(), "namespace", obj.GetNamespace(),
 				)
 
-				return ctrl.Result{Requeue: true}, err
+				return ctrl.Result{Requeue: true}, fmt.Errorf("failed to find a child resource: %w", err)
 			}
 
 			if err := r.Client.Create(ctx, obj); err != nil {
@@ -134,7 +150,7 @@ func (r *ApplicationReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error)
 					"type", gvk, "name", obj.GetName(), "namespace", obj.GetNamespace(),
 				)
 
-				return ctrl.Result{Requeue: true}, err
+				return ctrl.Result{Requeue: true}, fmt.Errorf("failed to create a child resource: %w", err)
 			}
 
 			continue
@@ -145,11 +161,11 @@ func (r *ApplicationReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error)
 			lastApplied, err = yaml.ParseUnstructured([]byte(lastAppliedJSON))
 
 			if err != nil {
-				return ctrl.Result{Requeue: false}, err
+				return ctrl.Result{Requeue: false}, fmt.Errorf("last applied json is broken: %w", err)
 			}
 
 			if err := r.setMetadata(&app, lastApplied); err != nil {
-				return ctrl.Result{Requeue: false}, err
+				return ctrl.Result{Requeue: false}, fmt.Errorf("setting metadata to last applied json failed: %w", err)
 			}
 		} else {
 			lastApplied = current
@@ -159,29 +175,60 @@ func (r *ApplicationReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error)
 		if err != nil {
 			log.Error(err, "failed to generate diff", "lastApplied", lastApplied, "new", obj)
 
-			return ctrl.Result{Requeue: false}, err
+			return ctrl.Result{Requeue: false}, fmt.Errorf("failed to generate diff: %w", err)
 		}
 
-		if len(diff) <= 2 { // {}
-			continue // no difference
+		if len(diff) > 2 { // != {}
+			err := r.Client.Patch(ctx, obj, client.MergeFrom(lastApplied))
+
+			if err != nil {
+				log.Error(
+					err,
+					"failed to patch the child resource",
+					"type", gvk, "name", obj.GetName(), "namespace", obj.GetNamespace(),
+				)
+
+				return ctrl.Result{Requeue: true}, fmt.Errorf("failed to patch the child resource: %w", err)
+			}
 		}
 
-		if err := r.Client.Patch(ctx, obj, client.MergeFrom(lastApplied)); err != nil {
-			log.Error(
-				err,
-				"failed to patch the child resource",
-				"type", gvk, "name", obj.GetName(), "namespace", obj.GetNamespace(),
-			)
+		resources = append(
+			resources,
+			v1alpha1.ApplicationResource{
+				TypeMeta:  app.TypeMeta,
+				Name:      obj.GetName(),
+				Namespace: obj.GetNamespace(),
+			},
+		)
+	}
 
-			return ctrl.Result{Requeue: true}, err
+	deleted := v1alpha1.FilterApplicationResource(app.Status.Resources, resources)
+
+	for i := range deleted {
+		gvk := schema.FromAPIVersionAndKind(
+			deleted[i].APIVersion, deleted[i].Kind,
+		)
+		d := &unstructured.Unstructured{}
+		d.SetGroupVersionKind(gvk)
+
+		if err := r.Client.Delete(ctx, d); err != nil && !apierrors.IsNotFound(err) {
+			log.Error(err, "failed to delete an obsolete child resource", "gvk", gvk.String(), "name", d.GetName(), "namespace", d.GetNamespace())
+
+			return ctrl.Result{Requeue: true}, fmt.Errorf("failed to delete an obsolete child resource: %w", err)
 		}
 	}
 
-	app.Status.Status = modokiv1alpha1.ApplicationDeployed
-	if err := r.Client.Update(ctx, &app); err != nil {
-		log.Error(err, "failed to update status", "status", app.Status.Status)
+	{
+		copied := app.DeepCopy()
+		copied.Status.Domains = app.Spec.Domains
+		copied.Status.Resources = resources
+		copied.Status.Status = modokiv1alpha1.ApplicationDeployed
 
-		return ctrl.Result{Requeue: true}, err
+		if err := r.Client.Patch(ctx, copied, client.MergeFrom(&app)); err != nil {
+			log.Error(err, "failed to update status", "status", app.Status.Status)
+
+			return ctrl.Result{Requeue: true}, fmt.Errorf("failed to update status: %w", err)
+		}
 	}
 
 	return ctrl.Result{}, nil
