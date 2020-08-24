@@ -89,11 +89,10 @@ func (r *ApplicationReconciler) Reconcile(req ctrl.Request) (res ctrl.Result, er
 
 	defer func() {
 		if err != nil {
-			copied := app.DeepCopy()
-			copied.Status.Status = modokiv1alpha1.ApplicationDeploymentFailed
-			copied.Status.Message = err.Error()
+			app.Status.Status = modokiv1alpha1.ApplicationDeploymentFailed
+			app.Status.Message = err.Error()
 
-			if err := r.Client.Patch(ctx, copied, client.MergeFrom(&app)); err != nil {
+			if err := r.Client.Status().Update(ctx, &app); err != nil {
 				log.Error(err, "failed to update status", "status", app.Status.Status)
 
 				res.Requeue = true
@@ -219,12 +218,11 @@ func (r *ApplicationReconciler) Reconcile(req ctrl.Request) (res ctrl.Result, er
 	}
 
 	{
-		copied := app.DeepCopy()
-		copied.Status.Domains = app.Spec.Domains
-		copied.Status.Resources = resources
-		copied.Status.Status = modokiv1alpha1.ApplicationDeployed
+		app.Status.Domains = app.Spec.Domains
+		app.Status.Resources = resources
+		app.Status.Status = modokiv1alpha1.ApplicationDeployed
 
-		if err := r.Client.Patch(ctx, copied, client.MergeFrom(&app)); err != nil {
+		if err := r.Client.Status().Update(ctx, &app); err != nil {
 			log.Error(err, "failed to update status", "status", app.Status.Status)
 
 			return ctrl.Result{Requeue: true}, fmt.Errorf("failed to update status: %w", err)
