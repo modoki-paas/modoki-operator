@@ -58,7 +58,8 @@ type ApplicationStatus struct {
 	Status ApplicationStatusType `json:"status"`
 
 	// Message is the detailed status or reason for the currnt status
-	Message string `json:"message"`
+	// +kubebuilder:validation:Optional
+	Message string `json:"message,omitempty"`
 
 	// Resources are the generated resources by modoki
 	Resources []ApplicationResource `json:"resources"`
