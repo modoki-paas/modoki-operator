@@ -16,7 +16,7 @@ jobs:
       uses: machine-learning-apps/actions-app-token@master
       with:
         APP_PEM: ${{ secrets.APP_PEM }}
-        APP_ID: ${{ secrets.APP_ID }}
+        APP_ID: "79081"
     - name: Get App Installation Token
       run: |
         echo "This token is masked: ${TOKEN}"
@@ -69,11 +69,13 @@ jobs:
         git config --local user.name "GitHub Action"
         git add .
         git commit -m 'Update swagger.json for ${{ steps.ref.outputs.result }}'
+        git remote set-url origin https://x-access-token:${{ steps.get_token.outputs.app_token }}@github.com/modoki-paas/kubernetes-openapi-generated.git
+        git push origin $BRANCH
 
-    - name: Push to kubernetes-openapi-generated
-      uses: ad-m/github-push-action@master
-      with:
-        github_token: ${{ steps.get_token.outputs.app_token }}
-        directory: ./kubernetes-openapi-generated
-        branch: ${{ steps.ref.outputs.result }}
-        repository: modoki-paas/kubernetes-openapi-generated
+    # - name: Push to kubernetes-openapi-generated
+    #   uses: ad-m/github-push-action@master
+    #   with:
+    #     github_token: ${{ steps.get_token.outputs.app_token }}
+    #     directory: ./kubernetes-openapi-generated
+    #     branch: ${{ steps.ref.outputs.result }}
+    #     repository: modoki-paas/kubernetes-openapi-generated
