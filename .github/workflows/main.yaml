@@ -45,6 +45,7 @@ jobs:
     - run: |
         kustomize build ${GITHUB_WORKSPACE}/config/crd | kubectl apply -f -
         kubectl proxy &
+        sleep 5
         curl localhost:8001/openapi/v2 | grep modoki
         cd kubernetes-openapi-generated
         git switch ${{ steps.ref.outputs.result }} || git switch --no-guess -c ${{ steps.ref.outputs.result }}
