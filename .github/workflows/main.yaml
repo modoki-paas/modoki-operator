@@ -20,3 +20,33 @@ jobs:
         dockerfile: Dockerfile
         tag_with_ref: true
         tag_with_sha: true
+
+    - name: Extract ref
+      id: ref
+      uses: actions/github-script@v3.0.0
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        script: |
+          return context.payload.ref.replace(/\/refs\/(tags|heads)\//, '');
+
+    - name: Set up directory for modoki-paas/kubernetes-openapi-generated
+      run: |
+        cd $(mktemp -d)
+
+    - name: Set up modoki-paas/kubernetes-openapi-generated
+      uses: actions/checkout@v2
+      with:
+        repository: 'modoki-paas/kubernetes-openapi-generated'
+
+    - name: Set up kind(Kubernetes 1.18.2)
+      uses: engineerd/setup-kind@v0.4.0
+      with:
+        version: v0.8.1
+        config: ./.github/kind.yaml
+
+    - run: |
+        kustomize build ${GITHUB_WORKSPACE}/config/cdk | kubectl apply -f -
+        kubectl proxy &
+        curl localhost:8001/openapi/v2 | grep modoki
+        git switch ${{ steps.ref.outputs.result }} || git switch --no-guess -c ${{ steps.ref.outputs.result }}
+        git branch
