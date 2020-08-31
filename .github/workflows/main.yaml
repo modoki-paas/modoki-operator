@@ -63,3 +63,4 @@ jobs:
         github_token: ${{ secrets.GITHUB_TOKEN }}
         directory: ./kubernetes-openapi-generated
         branch: ${{ steps.ref.outputs.result }}
+        repository: modoki-paas/kubernetes-openapi-generated
