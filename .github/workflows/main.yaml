@@ -42,6 +42,13 @@ jobs:
         path: kubernetes-openapi-generated
         clean: "false"
 
+    - name: Get token
+      id: get_token
+      uses: machine-learning-apps/actions-app-token@master
+      with:
+        APP_PEM: ${{ secrets.APP_PEM }}
+        APP_ID: ${{ secrets.APP_ID }}
+
     - name: Generate swagger.json
       run: |
         kustomize build ${GITHUB_WORKSPACE}/config/crd | kubectl apply -f -
@@ -49,7 +56,8 @@ jobs:
         sleep 5
         curl localhost:8001/openapi/v2 > ./swagger.json
         cd kubernetes-openapi-generated
-        git switch ${{ steps.ref.outputs.result }} || git switch --no-guess -c ${{ steps.ref.outputs.result }}
+        export BRANCH=${{ steps.ref.outputs.result }}
+        git switch $BRANCH || git switch --no-guess -c $BRANCH
         mkdir -p api/openapi-spec
         cp ../swagger.json api/openapi-spec/
         git config --local user.email "action@github.com"
@@ -60,7 +68,7 @@ jobs:
     - name: Push to kubernetes-openapi-generated
       uses: ad-m/github-push-action@master
       with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
+        github_token: ${{ steps.get_token.outputs.app_token }}
         directory: ./kubernetes-openapi-generated
         branch: ${{ steps.ref.outputs.result }}
         repository: modoki-paas/kubernetes-openapi-generated
