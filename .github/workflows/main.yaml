@@ -47,13 +47,16 @@ jobs:
         kustomize build ${GITHUB_WORKSPACE}/config/crd | kubectl apply -f -
         kubectl proxy &
         sleep 5
-        curl localhost:8001/openapi/v2 > ./tmp/swagger.json
+        curl localhost:8001/openapi/v2 > ./swagger.json
         cd kubernetes-openapi-generated
         git switch ${{ steps.ref.outputs.result }} || git switch --no-guess -c ${{ steps.ref.outputs.result }}
         mkdir -p api/openapi-spec
-        cp ../tmp/swagger.json api/openapi-spec/
+        cp ../swagger.json api/openapi-spec/
     
     - name: Create Pull Request
       uses: peter-evans/create-pull-request@v3.2.0
       with:
         commit-message: Update swagger.json for ${{ steps.ref.outputs.result }}
+        title: Update swagger.json for ${{ steps.ref.outputs.result }}
+        body: |
+          This pull request is automatically generated at GitHub Actions for modoki-paas/modoki-operator
