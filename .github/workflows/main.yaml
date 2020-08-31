@@ -11,6 +11,18 @@ jobs:
     steps:
     - uses: actions/checkout@v2
 
+    - name: Get token
+      id: get_token
+      uses: machine-learning-apps/actions-app-token@master
+      with:
+        APP_PEM: ${{ secrets.APP_PEM }}
+        APP_ID: ${{ secrets.APP_ID }}
+    - name: Get App Installation Token
+      run: |
+        echo "This token is masked: ${TOKEN}"
+      env: 
+        TOKEN: ${{ steps.get_token.outputs.app_token }}
+
     - name: Build Docker image
       uses: docker/build-push-action@v1
       with:
@@ -41,13 +53,6 @@ jobs:
         repository: 'modoki-paas/kubernetes-openapi-generated'
         path: kubernetes-openapi-generated
         clean: "false"
-
-    - name: Get token
-      id: get_token
-      uses: machine-learning-apps/actions-app-token@master
-      with:
-        APP_PEM: ${{ secrets.APP_PEM }}
-        APP_ID: ${{ secrets.APP_ID }}
 
     - name: Generate swagger.json
       run: |
