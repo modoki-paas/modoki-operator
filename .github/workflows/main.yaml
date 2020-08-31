@@ -54,5 +54,6 @@ jobs:
         cp ../swagger.json api/openapi-spec/
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
+        git add .
         git commit -m 'Update swagger.json for ${{ steps.ref.outputs.result }}'
         git push origin ${{ steps.ref.outputs.result }}
