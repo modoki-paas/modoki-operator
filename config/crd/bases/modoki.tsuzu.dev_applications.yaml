@@ -107,7 +107,6 @@ spec:
               type: string
           required:
           - domains
-          - message
           - resources
           - status
           type: object
