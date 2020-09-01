@@ -11,12 +11,50 @@ jobs:
     steps:
     - uses: actions/checkout@v2
 
-    - name: Build Docker image
-      uses: docker/build-push-action@v1
+    - name: Get token
+      id: get_token
+      uses: machine-learning-apps/actions-app-token@master
       with:
-        username: ${{ secrets.DOCKER_USERNAME }}
-        password: ${{ secrets.DOCKER_PASSWORD }}
-        repository: modokipaas/modoki-operator
-        dockerfile: Dockerfile
-        tag_with_ref: true
-        tag_with_sha: true
+        APP_PEM: ${{ secrets.APP_PEM }}
+        APP_ID: "79081"
+    - name: Get App Installation Token
+      run: |
+        echo "This token is masked: ${TOKEN}"
+      env: 
+        TOKEN: ${{ steps.get_token.outputs.app_token }}
+
+
+    - name: Extract ref
+      id: ref
+      uses: actions/github-script@v3.0.0
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        script: |
+          return context.payload.ref.replace(/refs\/(tags|heads)\//, '');
+
+    - name: Set up kind(Kubernetes 1.18.2)
+      uses: engineerd/setup-kind@v0.4.0
+      with:
+        version: v0.8.1
+        config: ./.github/kind.yaml
+
+    - name: Generate swagger.json
+      run: |
+        kustomize build ${GITHUB_WORKSPACE}/config/crd | kubectl apply -f -
+        kubectl proxy &
+        sleep 5
+        curl localhost:8001/openapi/v2 > /tmp/swagger.json
+        cd /tmp
+        git clone https://github.com/modoki-paas/kubernetes-openapi-generated
+        cd kubernetes-openapi-generated
+        export BRANCH=${{ steps.ref.outputs.result }}
+        git switch $BRANCH || git switch --no-guess -c $BRANCH
+        mkdir -p api/openapi-spec
+        cp ../swagger.json api/openapi-spec/
+        export EMAIL="$(curl 'https://api.github.com/users/actions-token[bot]' | jq .id)+actions-token@users.noreply.github.com"
+        git config --global user.email $EMAIL
+        git config --global user.name "actions-token"
+        git add .
+        git commit -m 'Update swagger.json for ${{ steps.ref.outputs.result }}' || true
+        git remote set-url origin https://x-access-token:${{ steps.get_token.outputs.app_token }}@github.com/modoki-paas/kubernetes-openapi-generated.git
+        git push origin $BRANCH
