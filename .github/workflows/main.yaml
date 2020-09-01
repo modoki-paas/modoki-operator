@@ -65,8 +65,9 @@ jobs:
         git switch $BRANCH || git switch --no-guess -c $BRANCH
         mkdir -p api/openapi-spec
         cp ../swagger.json api/openapi-spec/
-        git config --local user.email "action@github.com"
-        git config --local user.name "GitHub Action"
+        export EMAIL="$(curl 'https://api.github.com/users/actions-token[bot]' | jq .id)+actions-token@users.noreply.github.com"
+        git config --local user.email $EMAIL
+        git config --local user.name "actions-token"
         git add .
         git commit -m 'Update swagger.json for ${{ steps.ref.outputs.result }}'
         git remote set-url origin https://x-access-token:${{ steps.get_token.outputs.app_token }}@github.com/modoki-paas/kubernetes-openapi-generated.git
