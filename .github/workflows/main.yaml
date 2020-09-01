@@ -27,6 +27,8 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ github.event_name == 'push' }}
     steps:
+    - uses: actions/checkout@v2
+
     - name: Get token
       id: get_token
       uses: machine-learning-apps/actions-app-token@master
