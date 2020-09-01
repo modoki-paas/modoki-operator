@@ -55,6 +55,6 @@ jobs:
         git config --global user.email $EMAIL
         git config --global user.name "actions-token"
         git add .
-        git commit -m 'Update swagger.json for ${{ steps.ref.outputs.result }}'
+        git commit -m 'Update swagger.json for ${{ steps.ref.outputs.result }}' || true
         git remote set-url origin https://x-access-token:${{ steps.get_token.outputs.app_token }}@github.com/modoki-paas/kubernetes-openapi-generated.git
         git push origin $BRANCH
