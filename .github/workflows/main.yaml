@@ -5,9 +5,27 @@ on:
     branches: [master]
 
 jobs:
-  operator:
+  build:
     runs-on: ubuntu-latest
 
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Build Docker image
+      uses: docker/build-push-action@v1
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+        repository: modokipaas/modoki-operator
+        dockerfile: Dockerfile
+        tag_with_ref: true
+        tag_with_sha: true
+        push: ${{ github.event_name == 'push' }}
+  
+  generate:
+    needs: build
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'push' }}
     steps:
     - uses: actions/checkout@v2
 
@@ -17,12 +35,12 @@ jobs:
       with:
         APP_PEM: ${{ secrets.APP_PEM }}
         APP_ID: "79081"
+
     - name: Get App Installation Token
       run: |
         echo "This token is masked: ${TOKEN}"
       env: 
         TOKEN: ${{ steps.get_token.outputs.app_token }}
-
 
     - name: Extract ref
       id: ref
