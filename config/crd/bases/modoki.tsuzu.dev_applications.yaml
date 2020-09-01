@@ -1,6 +1,6 @@
 
 ---
-apiVersion: apiextensions.k8s.io/v1beta1
+apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
@@ -15,107 +15,107 @@ spec:
     plural: applications
     singular: application
   scope: Namespaced
-  subresources:
-    status: {}
-  validation:
-    openAPIV3Schema:
-      description: Application is the Schema for the applications API
-      properties:
-        apiVersion:
-          description: 'APIVersion defines the versioned schema of this representation
-            of an object. Servers should convert recognized schemas to the latest
-            internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
-          type: string
-        kind:
-          description: 'Kind is a string value representing the REST resource this
-            object represents. Servers may infer this from the endpoint the client
-            submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
-          type: string
-        metadata:
-          type: object
-        spec:
-          description: ApplicationSpec defines the desired state of Application
-          properties:
-            args:
-              description: Args is the arguments to the entrypoint
-              items:
-                type: string
-              type: array
-            attributes:
-              additionalProperties:
-                type: string
-              description: Attributes is parameters for the generator
-              type: object
-            command:
-              description: Command is an entrypoint array
-              items:
-                type: string
-              type: array
-            domains:
-              description: Domains are requested domains for the ingress of the application
-              items:
-                type: string
-              type: array
-            image:
-              description: Image is the url for Docker registry
-              type: string
-          required:
-          - domains
-          - image
-          type: object
-        status:
-          description: ApplicationStatus defines the observed state of Application
-          properties:
-            domains:
-              description: 'INSERT ADDITIONAL STATUS FIELD - define observed state
-                of cluster Important: Run "make" to regenerate code after modifying
-                this file Domains are assigned domains for the application'
-              items:
-                type: string
-              type: array
-            message:
-              description: Message is the detailed status or reason for the currnt
-                status
-              type: string
-            resources:
-              description: Resources are the generated resources by modoki
-              items:
-                description: ApplicationResource is a resource in Kubernetes
-                properties:
-                  apiVersion:
-                    description: 'APIVersion defines the versioned schema of this
-                      representation of an object. Servers should convert recognized
-                      schemas to the latest internal value, and may reject unrecognized
-                      values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
-                    type: string
-                  kind:
-                    description: 'Kind is a string value representing the REST resource
-                      this object represents. Servers may infer this from the endpoint
-                      the client submits requests to. Cannot be updated. In CamelCase.
-                      More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
-                    type: string
-                  name:
-                    type: string
-                  namespace:
-                    type: string
-                required:
-                - name
-                type: object
-              type: array
-            status:
-              description: Status is the current status of the application
-              type: string
-          required:
-          - domains
-          - resources
-          - status
-          type: object
-      type: object
-  version: v1alpha1
   versions:
   - name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: Application is the Schema for the applications API
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: ApplicationSpec defines the desired state of Application
+            properties:
+              args:
+                description: Args is the arguments to the entrypoint
+                items:
+                  type: string
+                type: array
+              attributes:
+                additionalProperties:
+                  type: string
+                description: Attributes is parameters for the generator
+                type: object
+              command:
+                description: Command is an entrypoint array
+                items:
+                  type: string
+                type: array
+              domains:
+                description: Domains are requested domains for the ingress of the
+                  application
+                items:
+                  type: string
+                type: array
+              image:
+                description: Image is the url for Docker registry
+                type: string
+            required:
+            - domains
+            - image
+            type: object
+          status:
+            description: ApplicationStatus defines the observed state of Application
+            properties:
+              domains:
+                description: 'INSERT ADDITIONAL STATUS FIELD - define observed state
+                  of cluster Important: Run "make" to regenerate code after modifying
+                  this file Domains are assigned domains for the application'
+                items:
+                  type: string
+                type: array
+              message:
+                description: Message is the detailed status or reason for the currnt
+                  status
+                type: string
+              resources:
+                description: Resources are the generated resources by modoki
+                items:
+                  description: ApplicationResource is a resource in Kubernetes
+                  properties:
+                    apiVersion:
+                      description: 'APIVersion defines the versioned schema of this
+                        representation of an object. Servers should convert recognized
+                        schemas to the latest internal value, and may reject unrecognized
+                        values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+                      type: string
+                    kind:
+                      description: 'Kind is a string value representing the REST resource
+                        this object represents. Servers may infer this from the endpoint
+                        the client submits requests to. Cannot be updated. In CamelCase.
+                        More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+                      type: string
+                    name:
+                      type: string
+                    namespace:
+                      type: string
+                  required:
+                  - name
+                  type: object
+                type: array
+              status:
+                description: Status is the current status of the application
+                type: string
+            required:
+            - domains
+            - resources
+            - status
+            type: object
+        type: object
     served: true
     storage: true
+    subresources:
+      status: {}
 status:
   acceptedNames:
     kind: ""
