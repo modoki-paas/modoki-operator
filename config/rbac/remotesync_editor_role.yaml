@@ -1,0 +1,24 @@
+# permissions for end users to edit remotesyncs.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: remotesync-editor-role
+rules:
+- apiGroups:
+  - modoki.tsuzu.dev
+  resources:
+  - remotesyncs
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - modoki.tsuzu.dev
+  resources:
+  - remotesyncs/status
+  verbs:
+  - get
