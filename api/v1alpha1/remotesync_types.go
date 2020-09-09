@@ -23,12 +23,31 @@ import (
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
+type Enabled struct {
+	// +kubebuilder:default:=true
+	Build bool `json:"build"`
+
+	// +kubebuilder:default:=true
+	Deploy bool `json:"deploy"`
+}
+
 type ApplicationRef struct {
 	Name string `json:"name"`
 }
 
+type GitHub struct {
+	Repository string `json:"repository"`
+	Branch     string `json:"branch"`
+}
+
+type Base struct {
+}
+
 type Image struct {
-	Name       string `json:"name"`
+	Name string `json:"name"`
+
+	// SecretName is the secret to pull from / push to the image registry
+	// +kubebuilder:validation:Optional
 	SecretName string `json:"secretName"`
 }
 
@@ -37,10 +56,11 @@ type RemoteSyncSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
-	Enabled        bool           `json:"enabled"`
-	Repository     string         `json:"repository"`
-	Image          Image          `json:"image"`
+	// +kubebuilder:validation:Optional
+	Enabled        Enabled        `json:"enabled"`
 	ApplicationRef ApplicationRef `json:"applicationRef"`
+	Base           Base           `json:"base"`
+	Image          Image          `json:"image"`
 }
 
 // RemoteSyncStatus defines the observed state of RemoteSync
