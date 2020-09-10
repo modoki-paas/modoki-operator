@@ -41,6 +41,7 @@ type GitHub struct {
 }
 
 type Base struct {
+	GitHub GitHub `json:"github"`
 }
 
 type Image struct {
