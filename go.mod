@@ -3,8 +3,11 @@ module github.com/modoki-paas/modoki-operator
 go 1.15
 
 require (
+	github.com/bradleyfalzon/ghinstallation v1.1.1 // indirect
 	github.com/go-logr/logr v0.1.0
 	github.com/go-logr/zapr v0.1.0
+	github.com/google/go-github/v30 v30.1.0 // indirect
+	github.com/heetch/confita v0.9.2 // indirect
 	github.com/labstack/gommon v0.3.0
 	github.com/onsi/ginkgo v1.11.0
 	github.com/onsi/gomega v1.8.1
