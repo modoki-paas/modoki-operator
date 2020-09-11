@@ -7,6 +7,7 @@ import (
 	"github.com/heetch/confita/backend/env"
 	"github.com/heetch/confita/backend/file"
 	"golang.org/x/xerrors"
+	corev1 "k8s.io/api/core/v1"
 )
 
 // GitHubPrivateKey represents a private key
@@ -17,12 +18,14 @@ type GitHubPrivateKey struct {
 
 // GitHub is a config for GitHub App
 type GitHub struct {
+	URL        string           `json:"url" yaml:"url" config:"github-url"`
 	AppID      int64            `json:"appID" yaml:"appID" config:"app-id"`
 	PrivateKey GitHubPrivateKey `json:"private_key" yaml:"private_key"`
 }
 
 type Config struct {
-	GitHub *GitHub `json:"github" yaml:"github"`
+	GitHub  *GitHub                `json:"github" yaml:"github"`
+	Builder corev1.ObjectReference `json:"builder" yaml:"builder"`
 }
 
 // ReadConfig reads config from env, json and yaml
@@ -36,7 +39,11 @@ func ReadConfig(path string) (*Config, error) {
 		file.NewOptionalBackend("/etc/modoki/modoki.yaml"),
 	)
 
-	cfg := &Config{}
+	cfg := &Config{
+		GitHub: &GitHub{
+			URL: "https://github.com",
+		},
+	}
 
 	err := loader.Load(context.Background(), cfg)
 

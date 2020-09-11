@@ -3,16 +3,20 @@ package ghsink
 import (
 	"context"
 	"net/http"
+	"strconv"
+	"time"
 
 	"github.com/bradleyfalzon/ghinstallation"
 	"github.com/google/go-github/v30/github"
 	"github.com/modoki-paas/modoki-operator/pkg/config"
+	"golang.org/x/sync/singleflight"
 	"golang.org/x/xerrors"
 )
 
 // GitHubSink is a base to initialize GitHub App clients
 type GitHubSink struct {
 	appsTransport *ghinstallation.AppsTransport
+	group         singleflight.Group
 }
 
 // NewGitHubSink initializes a utility to initialize GitHub App client
@@ -43,8 +47,36 @@ func (ghs *GitHubSink) AppsClient() *github.Client {
 	return github.NewClient(&http.Client{Transport: ghs.appsTransport})
 }
 
+// FindInstallationClient finds installation client from owner/repo
+func (ghs *GitHubSink) FindInstallationClient(ctx context.Context, owner, repo string) (*github.Client, error) {
+	ins, _, err := ghs.AppsClient().Apps.FindRepositoryInstallation(ctx, owner, repo)
+
+	if err != nil {
+		return nil, xerrors.Errorf("failed to find installation: %w", err)
+	}
+
+	return ghs.InstallationClient(ins.GetID()), nil
+}
+
 // InstallationClient returns API client for specific installation
 func (ghs *GitHubSink) InstallationClient(installationID int64) *github.Client {
+	key := strconv.FormatInt(installationID, 10)
+	client, _, _ := ghs.group.Do(
+		key,
+		func() (interface{}, error) {
+			go func() {
+				time.After(14 * 24 * time.Hour)
+				ghs.group.Forget(key)
+			}()
+
+			return ghs.installationClient(installationID), nil
+		},
+	)
+
+	return client.(*github.Client)
+}
+
+func (ghs *GitHubSink) installationClient(installationID int64) *github.Client {
 	itr := ghinstallation.NewFromAppsTransport(ghs.appsTransport, installationID)
 
 	return github.NewClient(&http.Client{Transport: itr})

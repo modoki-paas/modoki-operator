@@ -34,6 +34,8 @@ import (
 	modokiv1alpha1 "github.com/modoki-paas/modoki-operator/api/v1alpha1"
 	"github.com/modoki-paas/modoki-operator/controllers"
 	"github.com/modoki-paas/modoki-operator/generators"
+	"github.com/modoki-paas/modoki-operator/pkg/config"
+	"github.com/modoki-paas/modoki-operator/pkg/ghsink"
 	// +kubebuilder:scaffold:imports
 )
 
@@ -60,12 +62,28 @@ func main() {
 	var metricsAddr string
 	var webhookAddr string
 	var enableLeaderElection bool
+	var configPath string
+	flag.StringVar(&configPath, "config", "./modoki.yaml", "The path to the config file")
 	flag.StringVar(&metricsAddr, "metrics-addr", ":8080", "The address the metric endpoint binds to.")
 	flag.StringVar(&webhookAddr, "webhook-addr", ":5050", "The address the webhook endpoint to enqueue binds to.")
 	flag.BoolVar(&enableLeaderElection, "enable-leader-election", false,
 		"Enable leader election for controller manager. "+
 			"Enabling this will ensure there is only one active controller manager.")
 	flag.Parse()
+
+	config, err := config.ReadConfig(configPath)
+
+	if err != nil {
+		setupLog.Error(err, "failed to load config")
+		os.Exit(1)
+	}
+
+	ghsink, err := ghsink.NewGitHubSink(config)
+
+	if err != nil {
+		setupLog.Error(err, "failed to init ghsink")
+		os.Exit(1)
+	}
 
 	zrlogger := zap.NewRaw(zap.UseDevMode(true))
 	logger := zapr.NewLogger(zrlogger)
@@ -101,6 +119,7 @@ func main() {
 		Client: mgr.GetClient(),
 		Log:    ctrl.Log.WithName("controllers").WithName("RemoteSync"),
 		Scheme: mgr.GetScheme(),
+		GHSink: ghsink,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "RemoteSync")
 		os.Exit(1)

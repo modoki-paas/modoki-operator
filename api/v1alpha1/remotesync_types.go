@@ -36,12 +36,15 @@ type ApplicationRef struct {
 }
 
 type GitHub struct {
-	Repository string `json:"repository"`
+	Owner      string `json:"owner"`
+	Repository string `json:"repo"`
 	Branch     string `json:"branch"`
 }
 
 type Base struct {
 	GitHub GitHub `json:"github"`
+
+	SubPath string `json:"subPatah"`
 }
 
 type Image struct {
@@ -68,6 +71,10 @@ type RemoteSyncSpec struct {
 type RemoteSyncStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
+
+	// Message is the detailed status or reason for the currnt status
+	// +kubebuilder:validation:Optional
+	Message string `json:"message,omitempty"`
 }
 
 // +kubebuilder:object:root=true

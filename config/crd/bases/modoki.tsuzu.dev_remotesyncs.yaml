@@ -36,13 +36,69 @@ spec:
           spec:
             description: RemoteSyncSpec defines the desired state of RemoteSync
             properties:
-              foo:
-                description: Foo is an example field of RemoteSync. Edit RemoteSync_types.go
-                  to remove/update
-                type: string
+              applicationRef:
+                properties:
+                  name:
+                    type: string
+                required:
+                - name
+                type: object
+              base:
+                properties:
+                  github:
+                    properties:
+                      branch:
+                        type: string
+                      owner:
+                        type: string
+                      repo:
+                        type: string
+                    required:
+                    - branch
+                    - owner
+                    - repo
+                    type: object
+                  subPatah:
+                    type: string
+                required:
+                - github
+                - subPatah
+                type: object
+              enabled:
+                properties:
+                  build:
+                    default: true
+                    type: boolean
+                  deploy:
+                    default: true
+                    type: boolean
+                required:
+                - build
+                - deploy
+                type: object
+              image:
+                properties:
+                  name:
+                    type: string
+                  secretName:
+                    description: SecretName is the secret to pull from / push to the
+                      image registry
+                    type: string
+                required:
+                - name
+                type: object
+            required:
+            - applicationRef
+            - base
+            - image
             type: object
           status:
             description: RemoteSyncStatus defines the observed state of RemoteSync
+            properties:
+              message:
+                description: Message is the detailed status or reason for the currnt
+                  status
+                type: string
             type: object
         type: object
     served: true
