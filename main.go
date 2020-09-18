@@ -21,6 +21,7 @@ import (
 	"os"
 	_ "time/tzdata"
 
+	"github.com/go-logr/zapr"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
@@ -29,12 +30,11 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
-	"github.com/go-logr/zapr"
-
 	modokiv1alpha1 "github.com/modoki-paas/modoki-operator/api/v1alpha1"
 	"github.com/modoki-paas/modoki-operator/controllers"
 	"github.com/modoki-paas/modoki-operator/generators"
 	"github.com/modoki-paas/modoki-operator/pkg/config"
+	kpacktypes "github.com/pivotal/kpack/pkg/apis/build/v1alpha1"
 	// +kubebuilder:scaffold:imports
 )
 
@@ -44,6 +44,8 @@ var (
 )
 
 func init() {
+	utilruntime.Must(kpacktypes.AddToScheme(scheme))
+
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 
 	utilruntime.Must(modokiv1alpha1.AddToScheme(scheme))

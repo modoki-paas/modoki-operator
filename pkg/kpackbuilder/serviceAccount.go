@@ -42,7 +42,7 @@ func (b *KpackBuilder) newServiceAccount(secretNames []string) (*corev1.ServiceA
 		Secrets: secrets,
 	}
 
-	if err := controllerutil.SetOwnerReference(b.remoteSync, sa, b.scheme); err != nil {
+	if err := controllerutil.SetControllerReference(b.remoteSync, sa, b.scheme); err != nil {
 		return nil, xerrors.Errorf("failed to set ownerReferences to Image: %w", err)
 	}
 
