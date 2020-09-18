@@ -22,7 +22,7 @@ export default class MyChart extends Chart {
     const {app, config: rawConfig} = prop;
     super(scope, name);
 
-    if(app.spec.image.length === 0) {
+    if(!app.spec.image?.length) {
         app.spec.image = "modokipaas/no-app"
     }
 

@@ -2,7 +2,7 @@
 
 export interface ApplicationSpec {
     domains: string[];
-    image: string;
+    image?: string;
     command?: string[];
     args?: string[];
     attributes?: {[key: string]: string};
