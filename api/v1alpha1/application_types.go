@@ -32,6 +32,7 @@ type ApplicationSpec struct {
 	Domains []string `json:"domains"`
 
 	// Image is the url for Docker registry
+	// +kubebuilder:validation:Optional
 	Image string `json:"image,omitempty"`
 
 	// Command is an entrypoint array
