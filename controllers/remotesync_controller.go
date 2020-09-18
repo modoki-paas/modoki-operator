@@ -21,6 +21,7 @@ import (
 
 	"github.com/go-logr/logr"
 	"github.com/labstack/gommon/log"
+	"golang.org/x/xerrors"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -67,7 +68,11 @@ func (r *RemoteSyncReconciler) Reconcile(req ctrl.Request) (res ctrl.Result, err
 
 	builder := kpackbuilder.NewKpackBuilder(r.Client, &rs, r.Config, r.Scheme)
 
-	builder.Run(ctx)
+	if err := builder.Run(ctx); err != nil {
+		return ctrl.Result{
+			Requeue: true,
+		}, xerrors.Errorf("failed to update RemoteSync: %w", err)
+	}
 
 	return ctrl.Result{}, nil
 }
