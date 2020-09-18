@@ -22,6 +22,10 @@ export default class MyChart extends Chart {
     const {app, config: rawConfig} = prop;
     super(scope, name);
 
+    if(app.spec.image.length === 0) {
+        app.spec.image = "modokipaas/no-app"
+    }
+
     const defaultConfig: Config = {
         ingressNamespace: "modoki-operator-system",
         oauth2ServiceName: "oauth2-proxy",
