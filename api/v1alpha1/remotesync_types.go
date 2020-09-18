@@ -62,7 +62,9 @@ type GitHub struct {
 type Base struct {
 	GitHub GitHub `json:"github"`
 
-	SubPath string `json:"subPatah"`
+	// SubPath is the target directory in your repository
+	// +kubebuilder:default="/"
+	SubPath string `json:"subPath"`
 }
 
 type Image struct {
@@ -78,7 +80,6 @@ type RemoteSyncSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
-	// +kubebuilder:validation:Optional
 	// Enabled        Enabled        `json:"enabled"`
 	ApplicationRef ApplicationRef `json:"applicationRef"`
 	Base           Base           `json:"base"`

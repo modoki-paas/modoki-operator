@@ -73,11 +73,13 @@ spec:
                     - repo
                     - secretName
                     type: object
-                  subPatah:
+                  subPath:
+                    default: /
+                    description: SubPath is the target directory in your repository
                     type: string
                 required:
                 - github
-                - subPatah
+                - subPath
                 type: object
               image:
                 properties:
@@ -91,6 +93,7 @@ spec:
                 - name
                 type: object
             required:
+            - applicationRef
             - base
             - image
             type: object
