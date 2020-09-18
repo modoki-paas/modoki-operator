@@ -18,17 +18,18 @@ package controllers
 
 import (
 	"context"
-	"time"
 
 	"github.com/go-logr/logr"
 	"github.com/labstack/gommon/log"
-	"golang.org/x/xerrors"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	modokiv1alpha1 "github.com/modoki-paas/modoki-operator/api/v1alpha1"
-	"github.com/modoki-paas/modoki-operator/pkg/ghsink"
+	"github.com/modoki-paas/modoki-operator/pkg/config"
+	"github.com/modoki-paas/modoki-operator/pkg/kpackbuilder"
+	kpacktypes "github.com/pivotal/kpack/pkg/apis/build/v1alpha1"
+	corev1 "k8s.io/api/core/v1"
 )
 
 // RemoteSyncReconciler reconciles a RemoteSync object
@@ -36,7 +37,7 @@ type RemoteSyncReconciler struct {
 	client.Client
 	Log    logr.Logger
 	Scheme *runtime.Scheme
-	GHSink *ghsink.GitHubSink
+	Config *config.Config
 }
 
 // +kubebuilder:rbac:groups=modoki.tsuzu.dev,resources=remotesyncs,verbs=get;list;watch;create;update;patch;delete
@@ -64,28 +65,9 @@ func (r *RemoteSyncReconciler) Reconcile(req ctrl.Request) (res ctrl.Result, err
 		}
 	}()
 
-	spec := rs.Spec
-	gh := spec.Base.GitHub
+	builder := kpackbuilder.NewKpackBuilder(r.Client, &rs, r.Config, r.Scheme)
 
-	client, err := r.GHSink.FindInstallationClient(ctx, gh.Owner, gh.Repository)
-
-	if err != nil {
-		return ctrl.Result{
-			Requeue:      true,
-			RequeueAfter: 1 * time.Minute,
-		}, xerrors.Errorf("initializing github client failed: %w", err)
-	}
-
-	branch, _, err := client.Repositories.GetBranch(ctx, gh.Owner, gh.Repository, gh.Branch)
-
-	if err != nil {
-		return ctrl.Result{
-			Requeue:      true,
-			RequeueAfter: 1 * time.Minute,
-		}, xerrors.Errorf("failed to get branch(%s): %w", gh.Branch, err)
-	}
-
-	branch.GetCommit().GetSHA()
+	builder.Run(ctx)
 
 	return ctrl.Result{}, nil
 }
@@ -93,5 +75,7 @@ func (r *RemoteSyncReconciler) Reconcile(req ctrl.Request) (res ctrl.Result, err
 func (r *RemoteSyncReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&modokiv1alpha1.RemoteSync{}).
+		Owns(&corev1.ServiceAccount{}).
+		Owns(&kpacktypes.Image{}).
 		Complete(r)
 }

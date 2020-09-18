@@ -35,7 +35,6 @@ import (
 	"github.com/modoki-paas/modoki-operator/controllers"
 	"github.com/modoki-paas/modoki-operator/generators"
 	"github.com/modoki-paas/modoki-operator/pkg/config"
-	"github.com/modoki-paas/modoki-operator/pkg/ghsink"
 	// +kubebuilder:scaffold:imports
 )
 
@@ -78,13 +77,6 @@ func main() {
 		os.Exit(1)
 	}
 
-	ghsink, err := ghsink.NewGitHubSink(config)
-
-	if err != nil {
-		setupLog.Error(err, "failed to init ghsink")
-		os.Exit(1)
-	}
-
 	zrlogger := zap.NewRaw(zap.UseDevMode(true))
 	logger := zapr.NewLogger(zrlogger)
 
@@ -119,7 +111,7 @@ func main() {
 		Client: mgr.GetClient(),
 		Log:    ctrl.Log.WithName("controllers").WithName("RemoteSync"),
 		Scheme: mgr.GetScheme(),
-		GHSink: ghsink,
+		Config: config,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "RemoteSync")
 		os.Exit(1)

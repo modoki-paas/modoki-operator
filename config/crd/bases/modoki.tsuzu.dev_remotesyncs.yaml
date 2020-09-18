@@ -37,6 +37,7 @@ spec:
             description: RemoteSyncSpec defines the desired state of RemoteSync
             properties:
               applicationRef:
+                description: Enabled        Enabled        `json:"enabled"`
                 properties:
                   name:
                     type: string
@@ -46,35 +47,37 @@ spec:
               base:
                 properties:
                   github:
+                    description: GitHub is the source from GitHub
                     properties:
                       branch:
+                        description: Branch is the branch name(optional)
                         type: string
                       owner:
+                        description: Owner is the repository's owner
                         type: string
+                      pullRequest:
+                        description: PullRequest is the pull request id(optional)
+                        type: integer
                       repo:
+                        description: Repository is the repository's name
+                        type: string
+                      secretName:
+                        description: SecretName is the name of the Secret resource
+                          saving a GitHub token
+                        type: string
+                      sha:
+                        description: SHA is the sha of a commit(optional)
                         type: string
                     required:
-                    - branch
                     - owner
                     - repo
+                    - secretName
                     type: object
                   subPatah:
                     type: string
                 required:
                 - github
                 - subPatah
-                type: object
-              enabled:
-                properties:
-                  build:
-                    default: true
-                    type: boolean
-                  deploy:
-                    default: true
-                    type: boolean
-                required:
-                - build
-                - deploy
                 type: object
               image:
                 properties:
@@ -88,7 +91,6 @@ spec:
                 - name
                 type: object
             required:
-            - applicationRef
             - base
             - image
             type: object

@@ -1,67 +1,75 @@
 package kpackbuilder
 
 import (
-	"fmt"
+	"context"
 
 	"github.com/modoki-paas/modoki-operator/api/v1alpha1"
 	"github.com/modoki-paas/modoki-operator/pkg/config"
-	kpacktypes "github.com/pivotal/kpack/pkg/apis/build/v1alpha1"
-	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"golang.org/x/xerrors"
 	"k8s.io/apimachinery/pkg/runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+)
+
+var (
+	errNotFound = xerrors.New("not found")
 )
 
 type KpackBuilder struct {
+	client     client.Client
+	remoteSync *v1alpha1.RemoteSync
+	config     *config.Config
+	scheme     *runtime.Scheme
 }
 
-func (b *KpackBuilder) Generate(cfg *config.Config, remoteSync *v1alpha1.RemoteSync) ([]runtime.Object, error) {
-	spec := remoteSync.Spec
-
-	githubSecret := &corev1.Secret{
-		ObjectMeta: metav1.ObjectMeta{
-			Annotations: map[string]string{
-				"kpack.io/git": cfg.GitHub.URL,
-			},
-			Name: "github-secret",
-		},
-		Type: corev1.SecretTypeBasicAuth,
-		StringData: map[string]string{
-			corev1.BasicAuthUsernameKey: "x-access-token",
-			corev1.BasicAuthPasswordKey: "",
-		},
+func NewKpackBuilder(
+	client client.Client,
+	remoteSync *v1alpha1.RemoteSync,
+	config *config.Config,
+	scheme *runtime.Scheme,
+) *KpackBuilder {
+	return &KpackBuilder{
+		client:     client,
+		remoteSync: remoteSync,
+		config:     config,
+		scheme:     scheme,
 	}
-
-	serviceAccount := &corev1.ServiceAccount{
-		Secrets: []corev1.ObjectReference{
-			{
-				Name: "",
-			},
-		},
-	}
-
-	img := &kpacktypes.Image{
-		Spec: kpacktypes.ImageSpec{
-			ServiceAccount: serviceAccount.ObjectMeta.Name,
-			Builder:        cfg.Builder,
-			Source: kpacktypes.SourceConfig{
-				Git: &kpacktypes.Git{
-					URL:      fmt.Sprintf("%s/%s/%s", cfg.GitHub.URL, spec.Base.GitHub.Owner, spec.Base.GitHub.Repository),
-					Revision: spec.Base.GitHub.Branch,
-				},
-				SubPath: remoteSync.Spec.Base.SubPath,
-			},
-			FailedBuildHistoryLimit:  int64Ptr(3),
-			SuccessBuildHistoryLimit: int64Ptr(5),
-		},
-	}
-
-	return []runtime.Object{
-		githubSecret,
-		serviceAccount,
-		img,
-	}, nil
 }
 
-func int64Ptr(v int64) *int64 {
-	return &v
+func (b *KpackBuilder) Run(ctx context.Context) error {
+	saName, err := b.prepareServiceAccount(ctx)
+
+	if err != nil {
+		return xerrors.Errorf("failed to prepare ServiceAccount: %w", err)
+	}
+
+	imageName, err := b.prepareImage(ctx, saName)
+
+	if err != nil {
+		return xerrors.Errorf("failed to prepare Image: %w", err)
+	}
+
+	if len(imageName) == 0 {
+		return nil
+	}
+
+	img := &v1alpha1.Application{}
+	if err := b.client.Get(ctx, client.ObjectKey{
+		Name:      b.remoteSync.Spec.ApplicationRef.Name,
+		Namespace: b.remoteSync.Namespace,
+	}, img); err != nil {
+		return xerrors.Errorf("failed to get Application(%s): %w", b.remoteSync.Spec.ApplicationRef.Name, err)
+	}
+
+	if img.Spec.Image == imageName {
+		return nil
+	}
+
+	newImg := img.DeepCopy()
+	newImg.Spec.Image = imageName
+
+	if err := b.client.Patch(ctx, newImg, client.MergeFrom(img)); err != nil {
+		return xerrors.Errorf("failed to update image for Application: %w", err)
+	}
+
+	return nil
 }

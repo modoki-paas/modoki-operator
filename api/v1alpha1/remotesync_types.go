@@ -23,22 +23,40 @@ import (
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
-type Enabled struct {
-	// +kubebuilder:default:=true
-	Build bool `json:"build"`
+// type Enabled struct {
+// 	// +kubebuilder:default:=true
+// 	Build bool `json:"build"`
 
-	// +kubebuilder:default:=true
-	Deploy bool `json:"deploy"`
-}
+// 	// +kubebuilder:default:=true
+// 	Deploy bool `json:"deploy"`
+// }
 
+// ApplicationRef is the name of the Application resource
 type ApplicationRef struct {
 	Name string `json:"name"`
 }
 
+// GitHub is the source from GitHub
 type GitHub struct {
-	Owner      string `json:"owner"`
+	// Owner is the repository's owner
+	Owner string `json:"owner"`
+	// Repository is the repository's name
 	Repository string `json:"repo"`
-	Branch     string `json:"branch"`
+
+	// SHA is the sha of a commit(optional)
+	// +kubebuilder:validation:Optional
+	SHA string `json:"sha,omitempty"`
+
+	// Branch is the branch name(optional)
+	// +kubebuilder:validation:Optional
+	Branch string `json:"branch,omitempty"`
+
+	// PullRequest is the pull request id(optional)
+	// +kubebuilder:validation:Optional
+	PullRequest *int `json:"pullRequest,omitempty"`
+
+	// SecretName is the name of the Secret resource saving a GitHub token
+	SecretName string `json:"secretName"`
 }
 
 type Base struct {
@@ -61,7 +79,7 @@ type RemoteSyncSpec struct {
 	// Important: Run "make" to regenerate code after modifying this file
 
 	// +kubebuilder:validation:Optional
-	Enabled        Enabled        `json:"enabled"`
+	// Enabled        Enabled        `json:"enabled"`
 	ApplicationRef ApplicationRef `json:"applicationRef"`
 	Base           Base           `json:"base"`
 	Image          Image          `json:"image"`

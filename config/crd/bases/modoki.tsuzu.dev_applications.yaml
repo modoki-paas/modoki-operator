@@ -62,7 +62,6 @@ spec:
                 type: string
             required:
             - domains
-            - image
             type: object
           status:
             description: ApplicationStatus defines the observed state of Application
