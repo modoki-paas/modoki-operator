@@ -63,7 +63,7 @@ type Base struct {
 	GitHub GitHub `json:"github"`
 
 	// SubPath is the target directory in your repository
-	// +kubebuilder:default="/"
+	// +kubebuilder:validation:Default="/"
 	SubPath string `json:"subPath"`
 }
 
