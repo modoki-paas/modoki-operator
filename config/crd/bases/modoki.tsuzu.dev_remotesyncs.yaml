@@ -74,11 +74,11 @@ spec:
                     - secretName
                     type: object
                   subPath:
+                    default: /
                     description: SubPath is the target directory in your repository
                     type: string
                 required:
                 - github
-                - subPath
                 type: object
               image:
                 properties:
