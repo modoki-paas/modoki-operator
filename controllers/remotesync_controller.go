@@ -75,6 +75,14 @@ func (r *RemoteSyncReconciler) Reconcile(req ctrl.Request) (res ctrl.Result, err
 		}, xerrors.Errorf("failed to update RemoteSync: %w", err)
 	}
 
+	rs.Status.Message = ""
+
+	if err := r.Client.Status().Update(ctx, &rs); err != nil {
+		return ctrl.Result{
+			Requeue: true,
+		}, xerrors.Errorf("failed to update status of RemoteSync: %w", err)
+	}
+
 	return ctrl.Result{}, nil
 }
 
