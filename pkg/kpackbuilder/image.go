@@ -69,7 +69,7 @@ func (b *KpackBuilder) patchImage(image *kpacktypes.Image, saName, revision stri
 		},
 	}
 
-	if err := controllerutil.SetControllerReference(b.remoteSync, img, b.scheme); err != nil {
+	if err := controllerutil.SetControllerReference(b.remoteSync, newImage, b.scheme); err != nil {
 		return nil, xerrors.Errorf("failed to set ownerReferences to Image: %w", err)
 	}
 
