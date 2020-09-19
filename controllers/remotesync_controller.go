@@ -47,7 +47,7 @@ type RemoteSyncReconciler struct {
 
 func (r *RemoteSyncReconciler) Reconcile(req ctrl.Request) (res ctrl.Result, err error) {
 	ctx := context.Background()
-	_ = r.Log.WithValues("remotesync", req.NamespacedName)
+	logger := r.Log.WithValues("remotesync", req.NamespacedName)
 
 	// your logic here
 	var rs modokiv1alpha1.RemoteSync
@@ -67,7 +67,7 @@ func (r *RemoteSyncReconciler) Reconcile(req ctrl.Request) (res ctrl.Result, err
 		}
 	}()
 
-	builder := kpackbuilder.NewKpackBuilder(r.Client, &rs, r.Config, r.Scheme)
+	builder := kpackbuilder.NewKpackBuilder(r.Client, &rs, r.Config, r.Scheme, logger)
 
 	if err := builder.Run(ctx); err != nil {
 		return ctrl.Result{
