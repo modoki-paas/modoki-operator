@@ -14,7 +14,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
@@ -27,7 +26,7 @@ func (b *KpackBuilder) getKpackImageName() string {
 	return fmt.Sprintf("modoki-%s-%s", b.remoteSync.ObjectMeta.Name, b.remoteSync.Name)
 }
 
-func (b *KpackBuilder) newImage(saName, revision string) (*kpacktypes.Image, error) {
+func (b *KpackBuilder) patchImage(image *kpacktypes.Image, saName, revision string) (*kpacktypes.Image, error) {
 	u, err := url.Parse(b.config.GitHub.URL)
 
 	if err != nil {
@@ -37,34 +36,35 @@ func (b *KpackBuilder) newImage(saName, revision string) (*kpacktypes.Image, err
 	spec := b.remoteSync.Spec
 	u.Path = path.Join(spec.Base.GitHub.Owner, spec.Base.GitHub.Repository)
 
-	img := &kpacktypes.Image{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      b.getKpackImageName(),
-			Namespace: b.remoteSync.Namespace,
-		},
-		Spec: kpacktypes.ImageSpec{
-			ServiceAccount: saName,
-			Builder:        b.config.Builder,
-			Source: kpacktypes.SourceConfig{
-				Git: &kpacktypes.Git{
-					URL:      u.String(),
-					Revision: revision,
-				},
-				SubPath: spec.Base.SubPath,
+	var newImage *kpacktypes.Image
+	if image != nil {
+		newImage = image.DeepCopy()
+	} else {
+		newImage = &kpacktypes.Image{}
+	}
+
+	newImage.Name = b.getKpackImageName()
+	newImage.Namespace = b.remoteSync.Namespace
+
+	newImage.Spec.ServiceAccount = saName
+	newImage.Spec.Builder = b.config.Builder
+	newImage.Spec.Source.Git = &kpacktypes.Git{
+		URL:      u.String(),
+		Revision: revision,
+	}
+	newImage.Spec.Source.SubPath = spec.Base.SubPath
+
+	newImage.Spec.FailedBuildHistoryLimit = int64Ptr(3)
+	newImage.Spec.SuccessBuildHistoryLimit = int64Ptr(5)
+	newImage.Spec.Build = &kpacktypes.ImageBuild{
+		Resources: corev1.ResourceRequirements{
+			Requests: corev1.ResourceList{
+				corev1.ResourceCPU:    resource.MustParse("100m"),
+				corev1.ResourceMemory: resource.MustParse("200Mi"),
 			},
-			FailedBuildHistoryLimit:  int64Ptr(3),
-			SuccessBuildHistoryLimit: int64Ptr(5),
-			Build: &kpacktypes.ImageBuild{
-				Resources: corev1.ResourceRequirements{
-					Requests: corev1.ResourceList{
-						corev1.ResourceCPU:    resource.MustParse("100m"),
-						corev1.ResourceMemory: resource.MustParse("200Mi"),
-					},
-					Limits: corev1.ResourceList{
-						corev1.ResourceCPU:    resource.MustParse("1"),
-						corev1.ResourceMemory: resource.MustParse("500m"),
-					},
-				},
+			Limits: corev1.ResourceList{
+				corev1.ResourceCPU:    resource.MustParse("1"),
+				corev1.ResourceMemory: resource.MustParse("500m"),
 			},
 		},
 	}
@@ -73,7 +73,7 @@ func (b *KpackBuilder) newImage(saName, revision string) (*kpacktypes.Image, err
 		return nil, xerrors.Errorf("failed to set ownerReferences to Image: %w", err)
 	}
 
-	return img, nil
+	return newImage, nil
 }
 
 func (b *KpackBuilder) findImage(ctx context.Context) (*kpacktypes.Image, error) {
@@ -136,18 +136,25 @@ func (b *KpackBuilder) prepareImage(ctx context.Context, saName string) (string,
 	}
 
 	image, err := b.findImage(ctx)
-	newImage, err := b.newImage(saName, revision)
-
-	if err != nil {
-		return "", xerrors.Errorf("failed to prepare image: %w", err)
-	}
 
 	switch err {
 	case nil:
+		newImage, err := b.patchImage(image, saName, revision)
+
+		if err != nil {
+			return "", xerrors.Errorf("failed to patch Image: %w", err)
+		}
+
 		if err := b.client.Patch(ctx, newImage, client.MergeFrom(image)); err != nil {
 			return "", xerrors.Errorf("failed to update existing Image: %w", err)
 		}
 	case errNotFound:
+		newImage, err := b.patchImage(nil, saName, revision)
+
+		if err != nil {
+			return "", xerrors.Errorf("failed to create Image: %w", err)
+		}
+
 		if err := b.client.Create(ctx, newImage); err != nil {
 			return "", xerrors.Errorf("failed to create Image: %w", err)
 		}

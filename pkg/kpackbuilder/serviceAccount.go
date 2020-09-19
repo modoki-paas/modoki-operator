@@ -7,7 +7,6 @@ import (
 	"golang.org/x/xerrors"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
@@ -22,10 +21,17 @@ const (
 )
 
 func (b *KpackBuilder) getServiceAccountName() string {
-	return fmt.Sprintf("modoki-%s-%s", b.remoteSync.ObjectMeta.Name, b.remoteSync.Name)
+	return fmt.Sprintf("modoki-%s-builder", b.remoteSync.ObjectMeta.Name)
 }
 
-func (b *KpackBuilder) newServiceAccount(secretNames []string) (*corev1.ServiceAccount, error) {
+func (b *KpackBuilder) patchServiceAccount(sa *corev1.ServiceAccount, secretNames []string) (*corev1.ServiceAccount, error) {
+	var newSA *corev1.ServiceAccount
+	if sa != nil {
+		newSA = sa.DeepCopy()
+	} else {
+		newSA = &corev1.ServiceAccount{}
+	}
+
 	secrets := make([]corev1.ObjectReference, 0, len(secretNames))
 
 	for i := range secretNames {
@@ -34,19 +40,15 @@ func (b *KpackBuilder) newServiceAccount(secretNames []string) (*corev1.ServiceA
 		})
 	}
 
-	sa := &corev1.ServiceAccount{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      b.getServiceAccountName(),
-			Namespace: b.remoteSync.Namespace,
-		},
-		Secrets: secrets,
-	}
+	newSA.Name = b.getServiceAccountName()
+	newSA.Namespace = b.remoteSync.Namespace
+	newSA.Secrets = secrets
 
-	if err := controllerutil.SetControllerReference(b.remoteSync, sa, b.scheme); err != nil {
+	if err := controllerutil.SetControllerReference(b.remoteSync, newSA, b.scheme); err != nil {
 		return nil, xerrors.Errorf("failed to set ownerReferences to Image: %w", err)
 	}
 
-	return sa, nil
+	return newSA, nil
 }
 
 func (b *KpackBuilder) findServiceAccount(ctx context.Context) (*corev1.ServiceAccount, error) {
@@ -72,20 +74,26 @@ func (b *KpackBuilder) prepareServiceAccount(ctx context.Context) (string, error
 		b.remoteSync.Spec.Image.SecretName,
 	}
 
-	newSA, err := b.newServiceAccount(secretNames)
-
-	if err != nil {
-		return "", xerrors.Errorf("failed to get new ServiceAccount: %w", err)
-	}
-
 	sa, err := b.findServiceAccount(ctx)
 
 	switch err {
 	case nil:
+		newSA, err := b.patchServiceAccount(sa, secretNames)
+
+		if err != nil {
+			return "", xerrors.Errorf("failed to get new ServiceAccount: %w", err)
+		}
+
 		if err := b.client.Patch(ctx, newSA, client.MergeFrom(sa)); err != nil {
 			return "", xerrors.Errorf("failed to update existing ServiceAccount: %w", err)
 		}
 	case errNotFound:
+		newSA, err := b.patchServiceAccount(nil, secretNames)
+
+		if err != nil {
+			return "", xerrors.Errorf("failed to get new ServiceAccount: %w", err)
+		}
+
 		if err := b.client.Create(ctx, newSA); err != nil {
 			return "", xerrors.Errorf("failed to create ServiceAccount: %w", err)
 		}
