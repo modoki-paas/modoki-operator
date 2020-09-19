@@ -23,6 +23,11 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build -a -o manager 
 # Refer to https://github.com/GoogleContainerTools/distroless for more details
 FROM node:12.18.3-slim
 WORKDIR /
+
+RUN apt-get update && \
+    apt-get install -y ca-certificates && \
+    rm -rf /var/lib/apt/lists/*
+
 COPY cdk8s-template/ cdk8s-template/
 RUN cd /cdk8s-template && npm ci
 
