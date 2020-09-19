@@ -8,6 +8,7 @@ import (
 	"path"
 
 	"github.com/google/go-github/v30/github"
+	"github.com/modoki-paas/modoki-operator/pkg/k8sclientutil"
 	"github.com/modoki-paas/modoki-operator/pkg/tokentransport"
 	kpacktypes "github.com/pivotal/kpack/pkg/apis/build/v1alpha1"
 	"golang.org/x/xerrors"
@@ -118,7 +119,7 @@ func (b *KpackBuilder) prepareImage(ctx context.Context, saName string) (string,
 		pr, _, err := ghclient.PullRequests.Get(ctx, gh.Owner, gh.Repository, *gh.PullRequest)
 
 		if err != nil {
-			return "", xerrors.Errorf("failed to get branch for %s: %w", gh.Branch, err)
+			return "", xerrors.Errorf("failed to get branch for PR(%d): %w", *gh.PullRequest, err)
 		}
 		revision = pr.GetMergeCommitSHA()
 	default:
@@ -130,7 +131,7 @@ func (b *KpackBuilder) prepareImage(ctx context.Context, saName string) (string,
 		branch, _, err := ghclient.Repositories.GetBranch(ctx, gh.Owner, gh.Repository, b)
 
 		if err != nil {
-			return "", xerrors.Errorf("failed to get branch for %s: %w", gh.Branch, err)
+			return "", xerrors.Errorf("failed to get branch for %s: %w", b, err)
 		}
 		revision = branch.GetCommit().GetSHA()
 	}
@@ -145,7 +146,7 @@ func (b *KpackBuilder) prepareImage(ctx context.Context, saName string) (string,
 			return "", xerrors.Errorf("failed to patch Image: %w", err)
 		}
 
-		if err := b.client.Patch(ctx, newImage, client.MergeFrom(image)); err != nil {
+		if err := k8sclientutil.Patch(ctx, b.client, newImage, client.MergeFrom(image)); err != nil {
 			return "", xerrors.Errorf("failed to update existing Image: %w", err)
 		}
 	case errNotFound:

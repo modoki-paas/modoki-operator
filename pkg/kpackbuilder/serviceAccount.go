@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/modoki-paas/modoki-operator/pkg/k8sclientutil"
 	"golang.org/x/xerrors"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -84,7 +85,7 @@ func (b *KpackBuilder) prepareServiceAccount(ctx context.Context) (string, error
 			return "", xerrors.Errorf("failed to get new ServiceAccount: %w", err)
 		}
 
-		if err := b.client.Patch(ctx, newSA, client.MergeFrom(sa)); err != nil {
+		if err := k8sclientutil.Patch(ctx, b.client, newSA, client.MergeFrom(sa)); err != nil {
 			return "", xerrors.Errorf("failed to update existing ServiceAccount: %w", err)
 		}
 	case errNotFound:

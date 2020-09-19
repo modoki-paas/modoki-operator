@@ -3,8 +3,10 @@ package kpackbuilder
 import (
 	"context"
 
+	"github.com/go-logr/logr"
 	"github.com/modoki-paas/modoki-operator/api/v1alpha1"
 	"github.com/modoki-paas/modoki-operator/pkg/config"
+	"github.com/modoki-paas/modoki-operator/pkg/k8sclientutil"
 	"golang.org/x/xerrors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -19,6 +21,7 @@ type KpackBuilder struct {
 	remoteSync *v1alpha1.RemoteSync
 	config     *config.Config
 	scheme     *runtime.Scheme
+	logger     logr.Logger
 }
 
 func NewKpackBuilder(
@@ -26,12 +29,14 @@ func NewKpackBuilder(
 	remoteSync *v1alpha1.RemoteSync,
 	config *config.Config,
 	scheme *runtime.Scheme,
+	logger logr.Logger,
 ) *KpackBuilder {
 	return &KpackBuilder{
 		client:     client,
 		remoteSync: remoteSync,
 		config:     config,
 		scheme:     scheme,
+		logger:     logger,
 	}
 }
 
@@ -67,7 +72,7 @@ func (b *KpackBuilder) Run(ctx context.Context) error {
 	newImg := img.DeepCopy()
 	newImg.Spec.Image = imageName
 
-	if err := b.client.Patch(ctx, newImg, client.MergeFrom(img)); err != nil {
+	if err := k8sclientutil.Patch(ctx, b.client, newImg, client.MergeFrom(img)); err != nil {
 		return xerrors.Errorf("failed to update image for Application: %w", err)
 	}
 
