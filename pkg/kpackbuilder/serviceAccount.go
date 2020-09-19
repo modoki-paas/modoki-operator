@@ -72,12 +72,13 @@ func (b *KpackBuilder) prepareServiceAccount(ctx context.Context) (string, error
 		b.remoteSync.Spec.Image.SecretName,
 	}
 
-	sa, err := b.findServiceAccount(ctx)
 	newSA, err := b.newServiceAccount(secretNames)
 
 	if err != nil {
 		return "", xerrors.Errorf("failed to get new ServiceAccount: %w", err)
 	}
+
+	sa, err := b.findServiceAccount(ctx)
 
 	switch err {
 	case nil:

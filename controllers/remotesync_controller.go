@@ -43,6 +43,7 @@ type RemoteSyncReconciler struct {
 
 // +kubebuilder:rbac:groups=modoki.tsuzu.dev,resources=remotesyncs,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=modoki.tsuzu.dev,resources=remotesyncs/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=core,resources=serviceaccounts,verbs=get;list;watch;create;update;patch;delete
 
 func (r *RemoteSyncReconciler) Reconcile(req ctrl.Request) (res ctrl.Result, err error) {
 	ctx := context.Background()
