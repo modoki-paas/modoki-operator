@@ -2,6 +2,7 @@ package k8sclientutil
 
 import (
 	"context"
+	"fmt"
 
 	"golang.org/x/xerrors"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -18,6 +19,8 @@ func Patch(ctx context.Context, client client.Client, obj runtime.Object, patch 
 	if len(diff) <= 2 {
 		return nil
 	}
+
+	fmt.Printf("diff is found: %s\n", diff)
 
 	if err := client.Patch(ctx, obj, patch, opts...); err != nil {
 		return xerrors.Errorf("failed to patch: %w", err)
