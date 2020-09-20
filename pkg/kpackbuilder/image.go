@@ -66,7 +66,7 @@ func (b *KpackBuilder) patchImage(image *kpacktypes.Image, saName, revision stri
 			},
 			Limits: corev1.ResourceList{
 				corev1.ResourceCPU:    resource.MustParse("1"),
-				corev1.ResourceMemory: resource.MustParse("500m"),
+				corev1.ResourceMemory: resource.MustParse("500Mi"),
 			},
 		},
 	}
