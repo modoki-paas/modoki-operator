@@ -36,7 +36,7 @@ func (b *KpackBuilder) patchServiceAccount(sa *corev1.ServiceAccount, githubSecr
 		}
 
 		for _, s := range sa.Secrets {
-			if githubSecretName == s.Name &&
+			if _, found := expectedSecrets[s.Name]; found &&
 				(s.Namespace == "" || s.Namespace == b.remoteSync.Namespace) {
 				delete(expectedSecrets, s.Name)
 			}
