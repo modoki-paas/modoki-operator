@@ -25,7 +25,9 @@ func (b *KpackBuilder) getServiceAccountName() string {
 	return fmt.Sprintf("modoki-%s-builder", b.remoteSync.ObjectMeta.Name)
 }
 
-func (b *KpackBuilder) patchServiceAccount(sa *corev1.ServiceAccount, secretNames []string) (*corev1.ServiceAccount, error) {
+func (b *KpackBuilder) patchServiceAccount(sa *corev1.ServiceAccount, githubSecretName, imagePullSecretName string) (*corev1.ServiceAccount, error) {
+	secretNames := []string{githubSecretName, imagePullSecretName}
+
 	if sa != nil {
 		expectedSecrets := map[string]struct{}{}
 
@@ -34,15 +36,25 @@ func (b *KpackBuilder) patchServiceAccount(sa *corev1.ServiceAccount, secretName
 		}
 
 		for _, s := range sa.Secrets {
-			if _, found := expectedSecrets[s.Name]; found &&
+			if githubSecretName == s.Name &&
 				(s.Namespace == "" || s.Namespace == b.remoteSync.Namespace) {
 				delete(expectedSecrets, s.Name)
 			}
 		}
 
-		if len(expectedSecrets) == 0 {
+		imagePullSecretFound := false
+
+		for _, s := range sa.ImagePullSecrets {
+			if imagePullSecretName == s.Name {
+				imagePullSecretFound = true
+				break
+			}
+		}
+
+		if len(expectedSecrets) == 0 && imagePullSecretFound {
 			return sa, nil
 		}
+
 	}
 
 	var newSA *corev1.ServiceAccount
@@ -89,16 +101,14 @@ func (b *KpackBuilder) findServiceAccount(ctx context.Context) (*corev1.ServiceA
 }
 
 func (b *KpackBuilder) prepareServiceAccount(ctx context.Context) (string, error) {
-	secretNames := []string{
-		b.remoteSync.Spec.Base.GitHub.SecretName,
-		b.remoteSync.Spec.Image.SecretName,
-	}
+	githubSecretName := b.remoteSync.Spec.Base.GitHub.SecretName
+	imagePullSecretName := b.remoteSync.Spec.Image.SecretName
 
 	sa, err := b.findServiceAccount(ctx)
 
 	switch err {
 	case nil:
-		newSA, err := b.patchServiceAccount(sa, secretNames)
+		newSA, err := b.patchServiceAccount(sa, githubSecretName, imagePullSecretName)
 
 		if err != nil {
 			return "", xerrors.Errorf("failed to get new ServiceAccount: %w", err)
@@ -108,7 +118,7 @@ func (b *KpackBuilder) prepareServiceAccount(ctx context.Context) (string, error
 			return "", xerrors.Errorf("failed to update existing ServiceAccount: %w", err)
 		}
 	case errNotFound:
-		newSA, err := b.patchServiceAccount(nil, secretNames)
+		newSA, err := b.patchServiceAccount(nil, githubSecretName, imagePullSecretName)
 
 		if err != nil {
 			return "", xerrors.Errorf("failed to get new ServiceAccount: %w", err)
