@@ -75,6 +75,9 @@ func (b *KpackBuilder) patchServiceAccount(sa *corev1.ServiceAccount, githubSecr
 	newSA.Name = b.getServiceAccountName()
 	newSA.Namespace = b.remoteSync.Namespace
 	newSA.Secrets = secrets
+	newSA.ImagePullSecrets = []corev1.LocalObjectReference{
+		{Name: imagePullSecretName},
+	}
 
 	if err := controllerutil.SetControllerReference(b.remoteSync, newSA, b.scheme); err != nil {
 		return nil, xerrors.Errorf("failed to set ownerReferences to Image: %w", err)
