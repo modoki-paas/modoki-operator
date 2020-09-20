@@ -10,17 +10,9 @@ import (
 	corev1 "k8s.io/api/core/v1"
 )
 
-// GitHubPrivateKey represents a private key
-type GitHubPrivateKey struct {
-	Path string `config:"private_key_path" json:"path" yaml:"path"`
-	Raw  string `config:"private_key" json:"raw" yaml:"raw"`
-}
-
 // GitHub is a config for GitHub App
 type GitHub struct {
-	URL        string           `json:"url" yaml:"url" config:"github-url"`
-	AppID      int64            `json:"appID" yaml:"appID" config:"app-id"`
-	PrivateKey GitHubPrivateKey `json:"private_key" yaml:"private_key"`
+	URL string `json:"url" yaml:"url" config:"github-url"`
 }
 
 type Config struct {
