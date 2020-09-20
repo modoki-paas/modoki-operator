@@ -30,11 +30,12 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
+	kpacktypes "github.com/pivotal/kpack/pkg/apis/build/v1alpha1"
+
 	modokiv1alpha1 "github.com/modoki-paas/modoki-operator/api/v1alpha1"
 	"github.com/modoki-paas/modoki-operator/controllers"
 	"github.com/modoki-paas/modoki-operator/generators"
 	"github.com/modoki-paas/modoki-operator/pkg/config"
-	kpacktypes "github.com/pivotal/kpack/pkg/apis/build/v1alpha1"
 	// +kubebuilder:scaffold:imports
 )
 
@@ -116,6 +117,14 @@ func main() {
 		Config: config,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "RemoteSync")
+		os.Exit(1)
+	}
+	if err = (&controllers.AppPipelineReconciler{
+		Client: mgr.GetClient(),
+		Log:    ctrl.Log.WithName("controllers").WithName("AppPipeline"),
+		Scheme: mgr.GetScheme(),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "AppPipeline")
 		os.Exit(1)
 	}
 	// +kubebuilder:scaffold:builder
