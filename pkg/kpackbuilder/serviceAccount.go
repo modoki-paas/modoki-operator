@@ -26,21 +26,23 @@ func (b *KpackBuilder) getServiceAccountName() string {
 }
 
 func (b *KpackBuilder) patchServiceAccount(sa *corev1.ServiceAccount, secretNames []string) (*corev1.ServiceAccount, error) {
-	expectedSecrets := map[string]struct{}{}
+	if sa != nil {
+		expectedSecrets := map[string]struct{}{}
 
-	for _, s := range secretNames {
-		expectedSecrets[s] = struct{}{}
-	}
-
-	for _, s := range sa.Secrets {
-		if _, found := expectedSecrets[s.Name]; found &&
-			s.Namespace == b.remoteSync.Namespace {
-			delete(expectedSecrets, s.Name)
+		for _, s := range secretNames {
+			expectedSecrets[s] = struct{}{}
 		}
-	}
 
-	if len(expectedSecrets) == 0 {
-		return sa, nil
+		for _, s := range sa.Secrets {
+			if _, found := expectedSecrets[s.Name]; found &&
+				s.Namespace == b.remoteSync.Namespace {
+				delete(expectedSecrets, s.Name)
+			}
+		}
+
+		if len(expectedSecrets) == 0 {
+			return sa, nil
+		}
 	}
 
 	var newSA *corev1.ServiceAccount
