@@ -65,7 +65,7 @@ func (b *KpackBuilder) Run(ctx context.Context) error {
 		return xerrors.Errorf("failed to get Application(%s): %w", b.remoteSync.Spec.ApplicationRef.Name, err)
 	}
 
-	if img.Spec.Image == imageName {
+	if img.Spec.Image == imageName && img.Spec.ServiceAccount == saName {
 		return nil
 	}
 
