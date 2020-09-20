@@ -23,15 +23,64 @@ import (
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
+// Target defines the
+type Target struct {
+	// PullRequest - opened pull requests
+	// +kubebuilder:validation:Optional
+	// +kubebuilder:validation:Default=true
+	PullRequest bool `json:"pullRequest,omitempty"`
+}
+
+type MetadataTemplate struct {
+	// Map of string keys and values that can be used to organize and categorize
+	// (scope and select) objects. May match selectors of replication controllers
+	// and services.
+	// More info: http://kubernetes.io/docs/user-guide/labels
+	// +kubebuilder:validation:Optional
+	Labels map[string]string `json:"labels,omitempty"`
+
+	// Annotations is an unstructured key value map stored with a resource that may be
+	// set by external tools to store and retrieve arbitrary metadata. They are not
+	// queryable and should be preserved when modifying objects.
+	// More info: http://kubernetes.io/docs/user-guide/annotations
+	// +kubebuilder:validation:Optional
+	Annotations map[string]string `json:"annotations,omitempty"`
+}
+
+// ApplicationSpecTemplate defines the desired state of Application
+type ApplicationSpecTemplate struct {
+	// Command is an entrypoint array
+	// +kubebuilder:validation:Optional
+	Command []string `json:"command,omitempty"`
+
+	// Args is the arguments to the entrypoint
+	// +kubebuilder:validation:Optional
+	Args []string `json:"args,omitempty"`
+
+	// Attributes is parameters for the generator
+	// +kubebuilder:validation:Optional
+	Attributes map[string]string `json:"attributes,omitempty"`
+}
+
+type ApplicationTemplate struct {
+	// Standard object's metadata.
+	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
+	// +kubebuilder:validation:Optional
+	MetadataTemplate `json:"metadata,omitempty"`
+
+	Spec ApplicationSpecTemplate `json:"spec"`
+}
+
 // AppPipelineSpec defines the desired state of AppPipeline
 type AppPipelineSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
-	DomainBase string `json:"domainBase"`
-
-	Base  Base  `json:"base"`
-	Image Image `json:"image"`
+	DomainBase          string              `json:"domainBase"`
+	Target              Target              `json:"target"`
+	ApplicationTemplate ApplicationTemplate `json:"applicationTemplate"`
+	Base                Base                `json:"base"`
+	Image               Image               `json:"image"`
 }
 
 // AppPipelineStatus defines the observed state of AppPipeline
