@@ -47,6 +47,7 @@ func (b *KpackBuilder) patchImage(image *kpacktypes.Image, saName, revision stri
 	newImage.Name = b.getKpackImageName()
 	newImage.Namespace = b.remoteSync.Namespace
 
+	newImage.Spec.Builder = b.config.Builder
 	newImage.Spec.ServiceAccount = saName
 	newImage.Spec.Builder = b.config.Builder
 	newImage.Spec.Source.Git = &kpacktypes.Git{
@@ -69,6 +70,15 @@ func (b *KpackBuilder) patchImage(image *kpacktypes.Image, saName, revision stri
 			},
 		},
 	}
+
+	var tag string
+	if len(revision) < 7 {
+		tag = revision
+	} else {
+		tag = revision[:7]
+	}
+
+	newImage.Spec.Tag = fmt.Sprintf("%s:%s", spec.Image.Name, tag)
 
 	if err := controllerutil.SetControllerReference(b.remoteSync, newImage, b.scheme); err != nil {
 		return nil, xerrors.Errorf("failed to set ownerReferences to Image: %w", err)
