@@ -61,6 +61,8 @@ export default class MyChart extends Chart {
         namespace: app.metadata.namespace,
     }
 
+    const port = 8080;
+
     new k8s.Deployment(this, "main-deployment", {
         metadata,
         spec: {
@@ -82,10 +84,10 @@ export default class MyChart extends Chart {
                             command: app.spec.command,
                             args: app.spec.args,
                             ports: [
-                                { containerPort: 80 },
+                                { containerPort: port },
                             ],
                             env: [
-                                {name: "PORT", value: "80"},
+                                {name: "PORT", value: `${port}`},
                             ]
                         }
                     ]
@@ -100,8 +102,8 @@ export default class MyChart extends Chart {
             ports: [
                 {
                     name: "http",
-                    port: 80,
-                    targetPort: 80,
+                    port: port,
+                    targetPort: port,
                     protocol: "TCP",
                 }
             ],
@@ -125,7 +127,7 @@ export default class MyChart extends Chart {
                     paths: [{
                         backend: {
                             serviceName: svc.name,
-                            servicePort: 80,
+                            servicePort: port,
                         },
                         path: "/",
                     }],
