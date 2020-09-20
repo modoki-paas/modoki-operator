@@ -71,6 +71,7 @@ func (b *KpackBuilder) Run(ctx context.Context) error {
 
 	newImg := img.DeepCopy()
 	newImg.Spec.Image = imageName
+	newImg.Spec.ServiceAccount = saName
 
 	if err := k8sclientutil.Patch(ctx, b.client, newImg, client.MergeFrom(img)); err != nil {
 		return xerrors.Errorf("failed to update image for Application: %w", err)

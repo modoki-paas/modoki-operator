@@ -71,6 +71,9 @@ export default class MyChart extends Chart {
             template: {
                 metadata: { labels },
                 spec: {
+                    serviceAccount: app.spec.serviceAccount?.length ? app.spec.serviceAccount : undefined,
+                    serviceAccountName: app.spec.serviceAccount?.length ? app.spec.serviceAccount : undefined,
+                    imagePullSecrets: app.spec.imagePullSecret?.length ? [{name: app.spec.imagePullSecret}] : undefined,
                     automountServiceAccountToken: false,
                     containers: [
                         {

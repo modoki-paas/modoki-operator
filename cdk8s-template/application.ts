@@ -6,6 +6,8 @@ export interface ApplicationSpec {
     command?: string[];
     args?: string[];
     attributes?: {[key: string]: string};
+    serviceAccount?: string;
+    imagePullSecret?: string;
 };
 
 export interface ApplicationStatus {
