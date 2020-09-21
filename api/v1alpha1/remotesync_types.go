@@ -64,7 +64,6 @@ type Base struct {
 
 	// SubPath is the target directory in your repository
 	// +kubebuilder:validation:Optional
-	// +kubebuilder:default="/"
 	SubPath string `json:"subPath"`
 }
 

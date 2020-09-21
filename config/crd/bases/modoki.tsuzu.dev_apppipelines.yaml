@@ -6,20 +6,20 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.3.0
   creationTimestamp: null
-  name: remotesyncs.modoki.tsuzu.dev
+  name: apppipelines.modoki.tsuzu.dev
 spec:
   group: modoki.tsuzu.dev
   names:
-    kind: RemoteSync
-    listKind: RemoteSyncList
-    plural: remotesyncs
-    singular: remotesync
+    kind: AppPipeline
+    listKind: AppPipelineList
+    plural: apppipelines
+    singular: apppipeline
   scope: Namespaced
   versions:
   - name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: RemoteSync is the Schema for the remotesyncs API
+        description: AppPipeline is the Schema for the apppipelines API
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
@@ -34,39 +34,66 @@ spec:
           metadata:
             type: object
           spec:
-            description: RemoteSyncSpec defines the desired state of RemoteSync
+            description: AppPipelineSpec defines the desired state of AppPipeline
             properties:
-              applicationRef:
-                description: Enabled        Enabled        `json:"enabled"`
+              applicationTemplate:
                 properties:
-                  name:
-                    type: string
-                required:
-                - name
+                  metadata:
+                    description: 'Standard object''s metadata. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata'
+                    properties:
+                      annotations:
+                        additionalProperties:
+                          type: string
+                        description: 'Annotations is an unstructured key value map
+                          stored with a resource that may be set by external tools
+                          to store and retrieve arbitrary metadata. They are not queryable
+                          and should be preserved when modifying objects. More info:
+                          http://kubernetes.io/docs/user-guide/annotations'
+                        type: object
+                      labels:
+                        additionalProperties:
+                          type: string
+                        description: 'Map of string keys and values that can be used
+                          to organize and categorize (scope and select) objects. May
+                          match selectors of replication controllers and services.
+                          More info: http://kubernetes.io/docs/user-guide/labels'
+                        type: object
+                    type: object
+                  spec:
+                    description: ApplicationSpecTemplate defines the desired state
+                      of Application
+                    properties:
+                      args:
+                        description: Args is the arguments to the entrypoint
+                        items:
+                          type: string
+                        type: array
+                      attributes:
+                        additionalProperties:
+                          type: string
+                        description: Attributes is parameters for the generator
+                        type: object
+                      command:
+                        description: Command is an entrypoint array
+                        items:
+                          type: string
+                        type: array
+                    type: object
                 type: object
               base:
                 properties:
                   github:
-                    description: GitHub is the source from GitHub
+                    description: GitHubPipeline is the source from GitHub
                     properties:
-                      branch:
-                        description: Branch is the branch name(optional)
-                        type: string
                       owner:
                         description: Owner is the repository's owner
                         type: string
-                      pullRequest:
-                        description: PullRequest is the pull request id(optional)
-                        type: integer
                       repo:
                         description: Repository is the repository's name
                         type: string
                       secretName:
                         description: SecretName is the name of the Secret resource
                           saving a GitHub token
-                        type: string
-                      sha:
-                        description: SHA is the sha of a commit(optional)
                         type: string
                     required:
                     - owner
@@ -79,6 +106,8 @@ spec:
                 required:
                 - github
                 type: object
+              domainBase:
+                type: string
               image:
                 properties:
                   name:
@@ -91,12 +120,13 @@ spec:
                 - name
                 type: object
             required:
-            - applicationRef
+            - applicationTemplate
             - base
+            - domainBase
             - image
             type: object
           status:
-            description: RemoteSyncStatus defines the observed state of RemoteSync
+            description: AppPipelineStatus defines the observed state of AppPipeline
             properties:
               message:
                 description: Message is the detailed status or reason for the currnt

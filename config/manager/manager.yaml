@@ -57,6 +57,8 @@ spec:
           name: cdk8s-config
         - mountPath: /cdk8s-template/charts
           name: cdk8s-chart-writable
+        - mountPath: /etc/modoki/
+          name: modoki-config
       terminationGracePeriodSeconds: 10
       volumes:
         - name: cdk8s-config
@@ -73,6 +75,9 @@ spec:
             items:
               - key: chart.ts
                 path: chart.ts
+        - name: modoki-config
+          configMap:
+            name: modoki-config
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -84,6 +89,19 @@ metadata:
 data:
   config.json: |
     {}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: modoki-config
+  namespace: system
+  labels:
+    control-plane: controller-manager
+data:
+  modoki.yaml: |
+    builder:
+      name: default
+      kind: ClusterBuilder
 ---
 apiVersion: v1
 kind: ConfigMap

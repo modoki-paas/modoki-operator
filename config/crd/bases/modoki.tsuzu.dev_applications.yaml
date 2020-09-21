@@ -60,6 +60,14 @@ spec:
               image:
                 description: Image is the url for Docker registry
                 type: string
+              imagePullSecret:
+                description: ImagePullSecret is the name of the ImagePullSecret to
+                  pull your image
+                type: string
+              serviceAccount:
+                description: ServiceAccount is the name of the ServiceAccount to use
+                  to run this Application
+                type: string
             required:
             - domains
             type: object

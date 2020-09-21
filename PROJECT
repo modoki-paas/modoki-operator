@@ -8,6 +8,9 @@ resources:
 - group: modoki
   kind: RemoteSync
   version: v1alpha1
+- group: modoki
+  kind: AppPipeline
+  version: v1alpha1
 version: 3-alpha
 plugins:
   go.operator-sdk.io/v2-alpha: {}
