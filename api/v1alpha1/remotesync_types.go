@@ -94,8 +94,6 @@ type RemoteSyncStatus struct {
 	// Message is the detailed status or reason for the currnt status
 	// +kubebuilder:validation:Optional
 	Message string `json:"message,omitempty"`
-
-	Applications []string `json:"applications"`
 }
 
 // +kubebuilder:object:root=true
