@@ -9,6 +9,7 @@ import (
 	"github.com/google/go-github/v30/github"
 	"github.com/modoki-paas/modoki-operator/api/v1alpha1"
 	"golang.org/x/xerrors"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -100,7 +101,7 @@ func (p *GitHubPipeline) deleteObsoleteApps(ctx context.Context, prs []*github.P
 			},
 		})
 
-		if err != nil {
+		if err != nil && !apierrors.IsNotFound(err) {
 			logger := p.logger.WithValues(
 				"kind", "Application",
 				"name", name,
