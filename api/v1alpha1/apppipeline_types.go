@@ -89,7 +89,7 @@ type AppPipelineSpec struct {
 
 	DomainBase          string              `json:"domainBase"`
 	ApplicationTemplate ApplicationTemplate `json:"applicationTemplate"`
-	Base                Base                `json:"base"`
+	Base                PipelineBase        `json:"base"`
 	Image               Image               `json:"image"`
 }
 

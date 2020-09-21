@@ -111,7 +111,7 @@ func (b *KpackBuilder) prepareImage(ctx context.Context, saName string) (string,
 	gh := spec.Base.GitHub
 	secretName := gh.SecretName
 
-	token, err := b.getGitHubAccessToken(ctx, secretName, "password")
+	token, err := k8sclientutil.GetGitHubAccessToken(ctx, b.client, secretName, b.remoteSync.Namespace, "password")
 
 	if err != nil {
 		return "", xerrors.Errorf("failed to get access token from secret(%s): %w", secretName, err)
@@ -126,7 +126,7 @@ func (b *KpackBuilder) prepareImage(ctx context.Context, saName string) (string,
 	case len(gh.SHA) != 0:
 		revision = gh.SHA
 	case gh.PullRequest != nil:
-		pr, _, err := ghclient.PullRequests.Get(ctx, gh.Owner, gh.Repository, *gh.PullRequest)
+		pr, _, err := ghclient.PullRequests.Get(ctx, gh.Owner, gh.Repository, int(*gh.PullRequest))
 
 		if err != nil {
 			return "", xerrors.Errorf("failed to get branch for PR(%d): %w", *gh.PullRequest, err)

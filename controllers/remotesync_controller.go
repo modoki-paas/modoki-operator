@@ -20,7 +20,6 @@ import (
 	"context"
 
 	"github.com/go-logr/logr"
-	"github.com/labstack/gommon/log"
 	"golang.org/x/xerrors"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -60,7 +59,7 @@ func (r *RemoteSyncReconciler) Reconcile(req ctrl.Request) (res ctrl.Result, err
 			rs.Status.Message = err.Error()
 
 			if err := r.Client.Status().Update(ctx, &rs); err != nil {
-				log.Error(err, "failed to update status", "status", rs.Status.Message)
+				logger.Error(err, "failed to update status", "status", rs.Status.Message)
 
 				res.Requeue = true
 			}

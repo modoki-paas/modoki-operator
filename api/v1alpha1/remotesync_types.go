@@ -53,7 +53,7 @@ type GitHub struct {
 
 	// PullRequest is the pull request id(optional)
 	// +kubebuilder:validation:Optional
-	PullRequest *int `json:"pullRequest,omitempty"`
+	PullRequest *int64 `json:"pullRequest,omitempty"`
 
 	// SecretName is the name of the Secret resource saving a GitHub token
 	SecretName string `json:"secretName"`
@@ -94,6 +94,8 @@ type RemoteSyncStatus struct {
 	// Message is the detailed status or reason for the currnt status
 	// +kubebuilder:validation:Optional
 	Message string `json:"message,omitempty"`
+
+	Applications []string `json:"applications"`
 }
 
 // +kubebuilder:object:root=true
