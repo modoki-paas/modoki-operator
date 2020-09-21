@@ -19,6 +19,10 @@ func (p *GitHubPipeline) getAppName(pr int64) string {
 }
 
 func (p *GitHubPipeline) mutateApplication(app *v1alpha1.Application, pr int64) error {
+	if app.Labels == nil {
+		app.Labels = map[string]string{}
+	}
+
 	app.Labels[appPipelineLabel] = p.pipeline.Name
 	app.Labels[pullReqIDLabel] = strconv.FormatInt(pr, 10)
 
