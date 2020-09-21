@@ -49,6 +49,12 @@ func (b *KpackBuilder) Run(ctx context.Context) error {
 
 	imageName, err := b.prepareImage(ctx, saName)
 
+	if err == errNoAvailableRevision {
+		b.logger.Info("no available revision")
+
+		return nil
+	}
+
 	if err != nil {
 		return xerrors.Errorf("failed to prepare Image: %w", err)
 	}

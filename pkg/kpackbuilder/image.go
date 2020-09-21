@@ -225,5 +225,10 @@ func (b *KpackBuilder) prepareImage(ctx context.Context, saName string) (string,
 		return "", xerrors.Errorf("failed to find Image: %w", err)
 	}
 
-	return image.Status.LatestImage, nil
+	latestImage := ""
+	if image != nil {
+		latestImage = image.Status.LatestImage
+	}
+
+	return latestImage, nil
 }
