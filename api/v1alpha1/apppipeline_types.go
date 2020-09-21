@@ -23,14 +23,6 @@ import (
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
-// Target defines the
-type Target struct {
-	// PullRequest - opened pull requests
-	// +kubebuilder:validation:Optional
-	// +kubebuilder:validation:Default=true
-	PullRequest bool `json:"pullRequest,omitempty"`
-}
-
 type MetadataTemplate struct {
 	// Map of string keys and values that can be used to organize and categorize
 	// (scope and select) objects. May match selectors of replication controllers
@@ -71,13 +63,31 @@ type ApplicationTemplate struct {
 	Spec ApplicationSpecTemplate `json:"spec"`
 }
 
+// GitHubPipeline is the source from GitHub
+type GitHubPipeline struct {
+	// Owner is the repository's owner
+	Owner string `json:"owner"`
+	// Repository is the repository's name
+	Repository string `json:"repo"`
+
+	// SecretName is the name of the Secret resource saving a GitHub token
+	SecretName string `json:"secretName"`
+}
+
+type PipelineBase struct {
+	GitHub GitHubPipeline `json:"github"`
+
+	// SubPath is the target directory in your repository
+	// +kubebuilder:validation:Optional
+	SubPath string `json:"subPath"`
+}
+
 // AppPipelineSpec defines the desired state of AppPipeline
 type AppPipelineSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
 	DomainBase          string              `json:"domainBase"`
-	Target              Target              `json:"target"`
 	ApplicationTemplate ApplicationTemplate `json:"applicationTemplate"`
 	Base                Base                `json:"base"`
 	Image               Image               `json:"image"`
@@ -87,6 +97,10 @@ type AppPipelineSpec struct {
 type AppPipelineStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
+
+	// Message is the detailed status or reason for the currnt status
+	// +kubebuilder:validation:Optional
+	Message string `json:"message,omitempty"`
 }
 
 // +kubebuilder:object:root=true
