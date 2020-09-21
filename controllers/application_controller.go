@@ -39,6 +39,7 @@ import (
 	modokiv1alpha1 "github.com/modoki-paas/modoki-operator/api/v1alpha1"
 	"github.com/modoki-paas/modoki-operator/generators"
 	"github.com/modoki-paas/modoki-operator/pkg/yaml"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 const (
@@ -191,10 +192,12 @@ func (r *ApplicationReconciler) Reconcile(req ctrl.Request) (res ctrl.Result, er
 			}
 		}
 
+		apiVersion, kind := obj.GroupVersionKind().ToAPIVersionAndKind()
+
 		resources = append(
 			resources,
 			v1alpha1.ApplicationResource{
-				TypeMeta:  app.TypeMeta,
+				TypeMeta:  metav1.TypeMeta{},
 				Name:      obj.GetName(),
 				Namespace: obj.GetNamespace(),
 			},
