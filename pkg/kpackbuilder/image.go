@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/url"
 	"path"
+	"strings"
 
 	"github.com/google/go-github/v30/github"
 	"github.com/modoki-paas/modoki-operator/pkg/k8sclientutil"
@@ -23,8 +24,27 @@ func int64Ptr(v int64) *int64 {
 	return &v
 }
 
-func (b *KpackBuilder) getKpackImageName() string {
-	return fmt.Sprintf("modoki-%s-%s", b.remoteSync.ObjectMeta.Name, b.remoteSync.Name)
+func shortSHA(revision string) string {
+	var short string
+	if len(revision) < 7 {
+		short = revision
+	} else {
+		short = revision[:7]
+	}
+
+	return short
+}
+
+const (
+	remoteSyncKey = "modoki.tsuzu.dev/remote-sync"
+)
+
+var (
+	errNoAvailableRevision = xerrors.Errorf("unknown revision")
+)
+
+func (b *KpackBuilder) getKpackImageName(revision string) string {
+	return fmt.Sprintf("modoki-%s-%s", b.remoteSync.ObjectMeta.Name, shortSHA(revision))
 }
 
 func (b *KpackBuilder) patchImage(image *kpacktypes.Image, saName, revision string) (*kpacktypes.Image, error) {
@@ -44,8 +64,13 @@ func (b *KpackBuilder) patchImage(image *kpacktypes.Image, saName, revision stri
 		newImage = &kpacktypes.Image{}
 	}
 
-	newImage.Name = b.getKpackImageName()
+	newImage.Name = b.getKpackImageName(revision)
 	newImage.Namespace = b.remoteSync.Namespace
+
+	if newImage.Labels == nil {
+		newImage.Labels = map[string]string{}
+	}
+	newImage.Labels[remoteSyncKey] = b.remoteSync.Name
 
 	newImage.Spec.Builder = b.config.Builder
 	newImage.Spec.ServiceAccount = saName
@@ -71,14 +96,7 @@ func (b *KpackBuilder) patchImage(image *kpacktypes.Image, saName, revision stri
 		},
 	}
 
-	var tag string
-	if len(revision) < 7 {
-		tag = revision
-	} else {
-		tag = revision[:7]
-	}
-
-	newImage.Spec.Tag = fmt.Sprintf("%s:%s", spec.Image.Name, tag)
+	newImage.Spec.Tag = fmt.Sprintf("%s:%s", spec.Image.Name, shortSHA(revision))
 
 	if err := controllerutil.SetControllerReference(b.remoteSync, newImage, b.scheme); err != nil {
 		return nil, xerrors.Errorf("failed to set ownerReferences to Image: %w", err)
@@ -87,11 +105,11 @@ func (b *KpackBuilder) patchImage(image *kpacktypes.Image, saName, revision stri
 	return newImage, nil
 }
 
-func (b *KpackBuilder) findImage(ctx context.Context) (*kpacktypes.Image, error) {
+func (b *KpackBuilder) findImage(ctx context.Context, revision string) (*kpacktypes.Image, error) {
 	image := &kpacktypes.Image{}
 
 	err := b.client.Get(ctx, client.ObjectKey{
-		Name:      b.getKpackImageName(),
+		Name:      b.getKpackImageName(revision),
 		Namespace: b.remoteSync.Namespace,
 	}, image)
 
@@ -104,6 +122,32 @@ func (b *KpackBuilder) findImage(ctx context.Context) (*kpacktypes.Image, error)
 	}
 
 	return image, nil
+}
+
+func (b *KpackBuilder) cleanupOldImages(ctx context.Context, revision string) error {
+	images := &kpacktypes.ImageList{}
+	err := b.client.List(ctx, images, client.MatchingLabels{
+		remoteSyncKey: b.remoteSync.Name,
+	}, client.InNamespace(b.remoteSync.Namespace))
+
+	if err != nil {
+		return xerrors.Errorf("failed to get the list of RemoteSync: %w", err)
+	}
+
+	errors := []string{}
+	for i := range images.Items {
+		if images.Items[i].Name != b.getKpackImageName(revision) {
+			if err := b.client.Delete(ctx, &images.Items[i]); err != nil {
+				errors = append(errors, err.Error())
+			}
+		}
+	}
+
+	if len(errors) != 0 {
+		return xerrors.Errorf("failed to delete old images: %s", strings.Join(errors, ","))
+	}
+
+	return nil
 }
 
 func (b *KpackBuilder) prepareImage(ctx context.Context, saName string) (string, error) {
@@ -146,7 +190,15 @@ func (b *KpackBuilder) prepareImage(ctx context.Context, saName string) (string,
 		revision = branch.GetCommit().GetSHA()
 	}
 
-	image, err := b.findImage(ctx)
+	if len(revision) == 0 {
+		return "", errNoAvailableRevision
+	}
+
+	if err := b.cleanupOldImages(ctx, revision); err != nil {
+		return "", xerrors.Errorf("failed to cleanup old images: %w", err)
+	}
+
+	image, err := b.findImage(ctx, revision)
 
 	switch err {
 	case nil:
