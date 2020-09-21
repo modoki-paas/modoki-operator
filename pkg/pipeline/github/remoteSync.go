@@ -15,6 +15,13 @@ import (
 )
 
 func (p *GitHubPipeline) mutateRemoteSync(rs *v1alpha1.RemoteSync, pr int) error {
+	if rs.Labels == nil {
+		rs.Labels = map[string]string{}
+	}
+
+	rs.Labels[appPipelineLabel] = p.pipeline.Name
+	rs.Labels[pullReqIDLabel] = strconv.Itoa(pr)
+
 	spec := &rs.Spec
 
 	spec.ApplicationRef.Name = p.getAppName(pr)
