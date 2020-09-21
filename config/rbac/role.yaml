@@ -41,6 +41,26 @@ rules:
 - apiGroups:
   - modoki.tsuzu.dev
   resources:
+  - apppipelines
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - modoki.tsuzu.dev
+  resources:
+  - apppipelines/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - modoki.tsuzu.dev
+  resources:
   - remotesyncs
   verbs:
   - create

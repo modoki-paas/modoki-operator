@@ -1,4 +1,4 @@
-package kpackbuilder
+package k8sclientutil
 
 import (
 	"context"
@@ -8,11 +8,11 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func (b *KpackBuilder) getGitHubAccessToken(ctx context.Context, name, key string) (string, error) {
+func GetGitHubAccessToken(ctx context.Context, c client.Client, name, namespace, key string) (string, error) {
 	secret := &corev1.Secret{}
-	err := b.client.Get(ctx, client.ObjectKey{
+	err := c.Get(ctx, client.ObjectKey{
 		Name:      name,
-		Namespace: b.remoteSync.Namespace,
+		Namespace: namespace,
 	}, secret)
 
 	if err != nil {

@@ -1,0 +1,7 @@
+apiVersion: modoki.tsuzu.dev/v1alpha1
+kind: AppPipeline
+metadata:
+  name: apppipeline-sample
+spec:
+  # Add fields here
+  foo: bar

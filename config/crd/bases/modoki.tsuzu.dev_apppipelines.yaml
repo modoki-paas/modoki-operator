@@ -1,0 +1,146 @@
+
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.3.0
+  creationTimestamp: null
+  name: apppipelines.modoki.tsuzu.dev
+spec:
+  group: modoki.tsuzu.dev
+  names:
+    kind: AppPipeline
+    listKind: AppPipelineList
+    plural: apppipelines
+    singular: apppipeline
+  scope: Namespaced
+  versions:
+  - name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: AppPipeline is the Schema for the apppipelines API
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: AppPipelineSpec defines the desired state of AppPipeline
+            properties:
+              applicationTemplate:
+                properties:
+                  metadata:
+                    description: 'Standard object''s metadata. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata'
+                    properties:
+                      annotations:
+                        additionalProperties:
+                          type: string
+                        description: 'Annotations is an unstructured key value map
+                          stored with a resource that may be set by external tools
+                          to store and retrieve arbitrary metadata. They are not queryable
+                          and should be preserved when modifying objects. More info:
+                          http://kubernetes.io/docs/user-guide/annotations'
+                        type: object
+                      labels:
+                        additionalProperties:
+                          type: string
+                        description: 'Map of string keys and values that can be used
+                          to organize and categorize (scope and select) objects. May
+                          match selectors of replication controllers and services.
+                          More info: http://kubernetes.io/docs/user-guide/labels'
+                        type: object
+                    type: object
+                  spec:
+                    description: ApplicationSpecTemplate defines the desired state
+                      of Application
+                    properties:
+                      args:
+                        description: Args is the arguments to the entrypoint
+                        items:
+                          type: string
+                        type: array
+                      attributes:
+                        additionalProperties:
+                          type: string
+                        description: Attributes is parameters for the generator
+                        type: object
+                      command:
+                        description: Command is an entrypoint array
+                        items:
+                          type: string
+                        type: array
+                    type: object
+                type: object
+              base:
+                properties:
+                  github:
+                    description: GitHubPipeline is the source from GitHub
+                    properties:
+                      owner:
+                        description: Owner is the repository's owner
+                        type: string
+                      repo:
+                        description: Repository is the repository's name
+                        type: string
+                      secretName:
+                        description: SecretName is the name of the Secret resource
+                          saving a GitHub token
+                        type: string
+                    required:
+                    - owner
+                    - repo
+                    - secretName
+                    type: object
+                  subPath:
+                    description: SubPath is the target directory in your repository
+                    type: string
+                required:
+                - github
+                type: object
+              domainBase:
+                type: string
+              image:
+                properties:
+                  name:
+                    type: string
+                  secretName:
+                    description: SecretName is the secret to pull from / push to the
+                      image registry
+                    type: string
+                required:
+                - name
+                type: object
+            required:
+            - applicationTemplate
+            - base
+            - domainBase
+            - image
+            type: object
+          status:
+            description: AppPipelineStatus defines the observed state of AppPipeline
+            properties:
+              message:
+                description: Message is the detailed status or reason for the currnt
+                  status
+                type: string
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []
