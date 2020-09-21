@@ -197,7 +197,10 @@ func (r *ApplicationReconciler) Reconcile(req ctrl.Request) (res ctrl.Result, er
 		resources = append(
 			resources,
 			v1alpha1.ApplicationResource{
-				TypeMeta:  metav1.TypeMeta{},
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: apiVersion,
+					Kind:       kind,
+				},
 				Name:      obj.GetName(),
 				Namespace: obj.GetNamespace(),
 			},
