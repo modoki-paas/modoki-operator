@@ -46,6 +46,14 @@ type ApplicationSpec struct {
 	// Attributes is parameters for the generator
 	// +kubebuilder:validation:Optional
 	Attributes map[string]string `json:"attributes,omitempty"`
+
+	// ServiceAccount is the name of the ServiceAccount to use to run this Application
+	// +kubebuilder:validation:Optional
+	ServiceAccount string `json:"serviceAccount,omitempty"`
+
+	// ImagePullSecret is the name of the ImagePullSecret to pull your image
+	// +kubebuilder:validation:Optional
+	ImagePullSecret string `json:"imagePullSecret,omitempty"`
 }
 
 // ApplicationStatus defines the observed state of Application

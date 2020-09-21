@@ -65,12 +65,13 @@ func (b *KpackBuilder) Run(ctx context.Context) error {
 		return xerrors.Errorf("failed to get Application(%s): %w", b.remoteSync.Spec.ApplicationRef.Name, err)
 	}
 
-	if img.Spec.Image == imageName {
+	if img.Spec.Image == imageName && img.Spec.ServiceAccount == saName {
 		return nil
 	}
 
 	newImg := img.DeepCopy()
 	newImg.Spec.Image = imageName
+	newImg.Spec.ServiceAccount = saName
 
 	if err := k8sclientutil.Patch(ctx, b.client, newImg, client.MergeFrom(img)); err != nil {
 		return xerrors.Errorf("failed to update image for Application: %w", err)
