@@ -28,6 +28,10 @@ func (p *GitHubPipeline) mutateRemoteSync(rs *v1alpha1.RemoteSync, pr int64) err
 	spec.Image.Name = p.pipeline.Spec.Image.Name
 	spec.Image.SecretName = p.pipeline.Spec.Image.SecretName
 
+	if err := ctrl.SetControllerReference(p.pipeline, rs, p.scheme); err != nil {
+		return xerrors.Errorf("failed to set controller reference: %w", err)
+	}
+
 	return nil
 }
 
