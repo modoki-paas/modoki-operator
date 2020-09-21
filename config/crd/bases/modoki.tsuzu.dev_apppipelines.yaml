@@ -79,8 +79,6 @@ spec:
                           type: string
                         type: array
                     type: object
-                required:
-                - spec
                 type: object
               base:
                 properties:

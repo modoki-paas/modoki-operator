@@ -14,7 +14,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func (p *GitHubPipeline) mutateRemoteSync(rs *v1alpha1.RemoteSync, pr int64) error {
+func (p *GitHubPipeline) mutateRemoteSync(rs *v1alpha1.RemoteSync, pr int) error {
 	spec := &rs.Spec
 
 	spec.ApplicationRef.Name = p.getAppName(pr)
@@ -45,14 +45,14 @@ func (p *GitHubPipeline) deleteObsoleteRemoteSyncs(ctx context.Context, prs []*g
 		return xerrors.Errorf("failed to get the list of RemoteSync: %w", err)
 	}
 
-	ids := map[int64]struct{}{}
+	ids := map[int]struct{}{}
 	for i := range prs {
-		ids[prs[i].GetID()] = struct{}{}
+		ids[prs[i].GetNumber()] = struct{}{}
 	}
 
 	deleted := make([]string, 0, 5)
 	for i := range apps.Items {
-		id, err := strconv.ParseInt(apps.Items[i].Labels[pullReqIDLabel], 10, 64)
+		id, err := strconv.Atoi(apps.Items[i].Labels[pullReqIDLabel])
 
 		if err != nil {
 			deleted = append(deleted, apps.Items[i].Name)
@@ -98,7 +98,7 @@ func (p *GitHubPipeline) deleteObsoleteRemoteSyncs(ctx context.Context, prs []*g
 
 func (p *GitHubPipeline) prepareRemoteSyncs(ctx context.Context, prs []*github.PullRequest) error {
 	for _, pr := range prs {
-		id := pr.GetID()
+		id := pr.GetNumber()
 
 		app := &v1alpha1.RemoteSync{
 			ObjectMeta: metav1.ObjectMeta{

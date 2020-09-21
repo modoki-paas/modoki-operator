@@ -60,6 +60,7 @@ type ApplicationTemplate struct {
 	// +kubebuilder:validation:Optional
 	MetadataTemplate `json:"metadata,omitempty"`
 
+	// +kubebuilder:validation:Optional
 	Spec ApplicationSpecTemplate `json:"spec"`
 }
 

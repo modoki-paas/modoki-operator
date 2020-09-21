@@ -14,17 +14,17 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func (p *GitHubPipeline) getAppName(pr int64) string {
+func (p *GitHubPipeline) getAppName(pr int) string {
 	return fmt.Sprintf("modoki-pipeline-%s-pr-%d", p.pipeline.Name, pr)
 }
 
-func (p *GitHubPipeline) mutateApplication(app *v1alpha1.Application, pr int64) error {
+func (p *GitHubPipeline) mutateApplication(app *v1alpha1.Application, pr int) error {
 	if app.Labels == nil {
 		app.Labels = map[string]string{}
 	}
 
 	app.Labels[appPipelineLabel] = p.pipeline.Name
-	app.Labels[pullReqIDLabel] = strconv.FormatInt(pr, 10)
+	app.Labels[pullReqIDLabel] = strconv.Itoa(pr)
 
 	tmpl := p.pipeline.Spec.ApplicationTemplate
 	if len(tmpl.Spec.Command) != 0 {
@@ -69,14 +69,14 @@ func (p *GitHubPipeline) deleteObsoleteApps(ctx context.Context, prs []*github.P
 		return xerrors.Errorf("failed to get the list of Application: %w", err)
 	}
 
-	ids := map[int64]struct{}{}
+	ids := map[int]struct{}{}
 	for i := range prs {
-		ids[prs[i].GetID()] = struct{}{}
+		ids[prs[i].GetNumber()] = struct{}{}
 	}
 
 	deleted := make([]string, 0, 5)
 	for i := range apps.Items {
-		id, err := strconv.ParseInt(apps.Items[i].Labels[pullReqIDLabel], 10, 64)
+		id, err := strconv.Atoi(apps.Items[i].Labels[pullReqIDLabel])
 
 		if err != nil {
 			deleted = append(deleted, apps.Items[i].Name)
@@ -122,7 +122,7 @@ func (p *GitHubPipeline) deleteObsoleteApps(ctx context.Context, prs []*github.P
 
 func (p *GitHubPipeline) prepareApplications(ctx context.Context, prs []*github.PullRequest) error {
 	for _, pr := range prs {
-		id := pr.GetID()
+		id := pr.GetNumber()
 
 		app := &v1alpha1.Application{
 			ObjectMeta: metav1.ObjectMeta{

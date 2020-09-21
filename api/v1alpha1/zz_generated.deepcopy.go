@@ -338,7 +338,7 @@ func (in *GitHub) DeepCopyInto(out *GitHub) {
 	*out = *in
 	if in.PullRequest != nil {
 		in, out := &in.PullRequest, &out.PullRequest
-		*out = new(int64)
+		*out = new(int)
 		**out = **in
 	}
 }

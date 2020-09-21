@@ -57,7 +57,6 @@ spec:
                         type: string
                       pullRequest:
                         description: PullRequest is the pull request id(optional)
-                        format: int64
                         type: integer
                       repo:
                         description: Repository is the repository's name

@@ -53,7 +53,7 @@ type GitHub struct {
 
 	// PullRequest is the pull request id(optional)
 	// +kubebuilder:validation:Optional
-	PullRequest *int64 `json:"pullRequest,omitempty"`
+	PullRequest *int `json:"pullRequest,omitempty"`
 
 	// SecretName is the name of the Secret resource saving a GitHub token
 	SecretName string `json:"secretName"`
