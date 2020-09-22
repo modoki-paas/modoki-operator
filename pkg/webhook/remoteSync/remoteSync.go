@@ -77,6 +77,8 @@ func (r *remoteSyncHandler) push(event *github.PushEvent) {
 		logger.Error(err, "failed to list RemoteSync", "owner", owner, "repo", repo)
 	}
 
+	logger.Info("list", "list", list)
+
 	for i := range list.Items {
 		item := &list.Items[i]
 		gh := item.Spec.Base.GitHub
