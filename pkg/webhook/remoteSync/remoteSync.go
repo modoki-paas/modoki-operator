@@ -151,7 +151,8 @@ func (r *remoteSyncHandler) operation(event string, payload []byte) {
 
 		action := event.GetAction()
 
-		if action == "synchronize" {
+		switch action {
+		case "synchronize", "opened", "edited", "closed", "reopened":
 			r.pullRequest(event)
 		}
 	}
