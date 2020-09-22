@@ -69,5 +69,5 @@ func main() {
 
 	http.Handle("/webhook", webhook.NewHandler(token))
 
-	http.ListenAndServe(getListenAddr(), nil)
+	panic(http.ListenAndServe(getListenAddr(), nil))
 }
