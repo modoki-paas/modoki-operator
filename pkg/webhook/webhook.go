@@ -1,6 +1,7 @@
 package webhook
 
 import (
+	"log"
 	"net/http"
 
 	"github.com/google/go-github/v30/github"
@@ -26,6 +27,8 @@ func NewHandler(secret string) http.Handler {
 
 			return
 		}
+
+		log.Println(payload)
 
 		call(req.Header.Get(githubEventHeader), payload)
 	})
