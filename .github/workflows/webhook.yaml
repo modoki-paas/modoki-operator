@@ -1,4 +1,4 @@
-name: Docker
+name: Webhook
 on: 
   push:
   pull_request:
