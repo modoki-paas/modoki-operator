@@ -86,7 +86,11 @@ func (r *remoteSyncHandler) push(event *github.PushEvent) {
 			continue
 		}
 
-		if gh.Branch == branch {
+		if len(gh.SHA) != 0 || gh.PullRequest != nil {
+			continue
+		}
+
+		if gh.Branch == branch || (gh.Branch == "" && branch == "master") {
 			r.refresh(ctx, logger, item)
 		}
 	}
