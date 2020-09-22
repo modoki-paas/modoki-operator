@@ -51,6 +51,8 @@ func newK8sClient() client.Client {
 		setupLog.Error(err, "failed to initialize manager")
 	}
 
+	go mgr.Start(ctrl.SetupSignalHandler())
+
 	return mgr.GetClient()
 }
 
