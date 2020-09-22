@@ -7,6 +7,7 @@ import (
 	"github.com/go-logr/zapr"
 	modokiv1alpha1 "github.com/modoki-paas/modoki-operator/api/v1alpha1"
 	"github.com/modoki-paas/modoki-operator/pkg/webhook"
+	apppipeline "github.com/modoki-paas/modoki-operator/pkg/webhook/appPipeline"
 	remotesync "github.com/modoki-paas/modoki-operator/pkg/webhook/remoteSync"
 	kpacktypes "github.com/pivotal/kpack/pkg/apis/build/v1alpha1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -61,6 +62,10 @@ func main() {
 
 	client := newK8sClient()
 	remotesync.Register(
+		client,
+		ctrl.Log,
+	)
+	apppipeline.Register(
 		client,
 		ctrl.Log,
 	)
