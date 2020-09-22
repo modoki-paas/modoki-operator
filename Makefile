@@ -116,3 +116,7 @@ bundle: manifests
 # Build the bundle image.
 bundle-build:
 	docker build -f bundle.Dockerfile -t $(BUNDLE_IMG) .
+
+telepresence-external-webhook:
+	telepresence --expose 4080:80 --namespace modoki-operator-system --swap-deployment modoki-operator-external-webhook --mount /tmp/known --docker-run -v=/tmp/known/var/run/secrets:/var/run/secrets -p 4080:80 -ti --rm $(WEBHOOK_IMG)
+	# telepresence --expose 4080:80 --namespace modoki-operator-system --swap-deployment modoki-operator-external-webhook --mount /tmp/known --run-shell
