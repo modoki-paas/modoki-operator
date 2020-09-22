@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: external-webhook
+  namespace: system
+  labels:
+    control-plane: external-webhook
+spec:
+  selector:
+    matchLabels:
+      control-plane: external-webhook
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        control-plane: external-webhook
+    spec:
+      containers:
+      - image: external-webhook:latest
+        name: webhook
+        resources:
+          limits:
+            cpu: 500m
+            memory: 200Mi
+          requests:
+            cpu: 500m
+            memory: 200Mi
+        env:
+        - name: GITHUB_WEBHOOK_TOKEN
+          valueFrom:
+            secretKeyRef:
+              key: GITHUB_WEBHOOK_TOKEN
+              name: webhook-secret
+        volumeMounts:
+        - mountPath: /etc/modoki/
+          name: modoki-config
+      terminationGracePeriodSeconds: 10
+      volumes:
+      - name: modoki-config
+        configMap:
+          name: modoki-config
