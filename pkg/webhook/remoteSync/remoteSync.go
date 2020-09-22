@@ -34,6 +34,27 @@ func (r *remoteSyncHandler) filter(event string) bool {
 	return event == "push" || event == "pull_request"
 }
 
+func (r *remoteSyncHandler) refresh(ctx context.Context, logger logr.Logger, rs *v1alpha1.RemoteSync) {
+	logger = logger.WithValues(
+		"name", rs.Name,
+		"namespace", rs.Namespace,
+	)
+
+	var err error
+	for i := 0; i < 5; i++ {
+		err = k8sclientutil.Patch(ctx, r.client, rs, k8sclientutil.RefreshPatch)
+		if err == nil {
+			return
+		}
+
+		logger.Error(err, "failed to refresh")
+	}
+
+	logger.Error(err, "failed 5 times")
+
+	return
+}
+
 func (r *remoteSyncHandler) push(event *github.PushEvent) {
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
@@ -60,18 +81,47 @@ func (r *remoteSyncHandler) push(event *github.PushEvent) {
 		item := &list.Items[i]
 		gh := item.Spec.Base.GitHub
 
-		if gh.Owner == owner &&
-			gh.Repository == repo &&
-			gh.Branch == branch {
-			if err := k8sclientutil.Patch(ctx, r.client, item, k8sclientutil.RefreshPatch); err != nil {
-				logger.Error(err, "failed to refresh", "namespace", item.Namespace, "name", item.Name)
-			}
+		if gh.Owner != owner ||
+			gh.Repository != repo {
+			continue
+		}
+
+		if gh.Branch == branch {
+			r.refresh(ctx, logger, item)
 		}
 	}
 }
 
 func (r *remoteSyncHandler) pullRequest(event *github.PullRequestEvent) {
+	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+	defer cancel()
 
+	owner := event.GetRepo().GetOwner().GetLogin()
+	repo := event.GetRepo().GetName()
+	logger := r.logger.WithValues("owner", owner, "repo", repo, "pr", event.GetNumber())
+
+	id := event.GetNumber()
+
+	// TODO: Should use a better approach. List() every time will cause too much load
+	list := &v1alpha1.RemoteSyncList{}
+	if err := r.client.List(ctx, list); err != nil {
+		logger.Error(err, "failed to list RemoteSync", "owner", owner, "repo", repo)
+	}
+
+	for i := range list.Items {
+		item := &list.Items[i]
+		gh := item.Spec.Base.GitHub
+
+		if gh.Owner != owner ||
+			gh.Repository != repo {
+			continue
+		}
+
+		if gh.PullRequest != nil &&
+			*gh.PullRequest == id {
+			r.refresh(ctx, logger, item)
+		}
+	}
 }
 
 func (r *remoteSyncHandler) operation(event string, payload []byte) {
