@@ -28,7 +28,7 @@ func NewHandler(secret string) http.Handler {
 			return
 		}
 
-		log.Println(payload)
+		log.Println("event: ", string(payload))
 
 		call(req.Header.Get(githubEventHeader), payload)
 	})
