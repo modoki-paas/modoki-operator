@@ -39,3 +39,14 @@ spec:
       - name: modoki-config
         configMap:
           name: modoki-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: external-webhook
+spec:
+  selector:
+    control-plane: external-webhook
+  ports:
+  - port: 80
+    targetPort: 80

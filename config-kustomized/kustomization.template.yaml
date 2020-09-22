@@ -1,6 +1,6 @@
 bases:
-  - ../config/default
-
+- ../config/default
+- ingress.yaml
 configMapGenerator:
 - behavior: replace
   name: modoki-operator-cdk8s-chart
