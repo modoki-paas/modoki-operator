@@ -27,14 +27,14 @@ spec:
             memory: 200Mi
         env:
         - name: PORT
-          value: "8080"
+          value: "80"
         - name: GITHUB_WEBHOOK_TOKEN
           valueFrom:
             secretKeyRef:
               key: GITHUB_WEBHOOK_TOKEN
               name: webhook-secret
         ports:
-          - containerPort: 8080
+          - containerPort: 80
         volumeMounts:
         - mountPath: /etc/modoki/
           name: modoki-config
@@ -52,5 +52,5 @@ spec:
   selector:
     control-plane: external-webhook
   ports:
-  - port: 80
+  - port: 8080
     targetPort: 8080
