@@ -15,13 +15,13 @@ COPY api/ api/
 COPY pkg/ pkg/
 
 # Build
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build -a -o webhook webhook/main.go
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build -a -o /bin/webhook webhook/main.go
 
 # Use distroless as minimal base image to package the manager binary
 # Refer to https://github.com/GoogleContainerTools/distroless for more details
 FROM gcr.io/distroless/base
 WORKDIR /
 
-COPY --from=builder /workspace/webhook .
+COPY --from=builder /bin/webhook .
 
 ENTRYPOINT ["/webhook"]
