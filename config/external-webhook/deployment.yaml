@@ -20,8 +20,8 @@ spec:
         name: webhook
         resources:
           limits:
-            cpu: 500m
-            memory: 200Mi
+            cpu: 1000m
+            memory: 500Mi
           requests:
             cpu: 500m
             memory: 200Mi
