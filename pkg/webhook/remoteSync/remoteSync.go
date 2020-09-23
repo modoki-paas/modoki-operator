@@ -3,6 +3,7 @@ package remotesync
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"log"
 	"strings"
 	"time"
@@ -116,6 +117,7 @@ func (r *remoteSyncHandler) pullRequest(event *github.PullRequestEvent) {
 		logger.Error(err, "failed to list RemoteSync", "owner", owner, "repo", repo)
 	}
 
+	logger.Info("looking for remotesync")
 	for i := range list.Items {
 		item := &list.Items[i]
 		gh := item.Spec.Base.GitHub
@@ -124,6 +126,9 @@ func (r *remoteSyncHandler) pullRequest(event *github.PullRequestEvent) {
 			gh.Repository != repo {
 			continue
 		}
+
+		a, _ := json.Marshal(item)
+		fmt.Println(string(a))
 
 		if gh.PullRequest != nil &&
 			*gh.PullRequest == id {
@@ -152,6 +157,8 @@ func (r *remoteSyncHandler) operation(event string, payload []byte) {
 		}
 
 		action := event.GetAction()
+
+		r.logger.Info("pull_req action", "action", action)
 
 		switch action {
 		case "synchronize", "opened", "edited", "closed", "reopened":
