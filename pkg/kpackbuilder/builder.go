@@ -61,9 +61,11 @@ func (b *KpackBuilder) Run(ctx context.Context) (err error) {
 		b.logger.Info("no available revision")
 
 		return nil
+
 	case ErrPendingPullRequest:
 		pending = true
-
+		fallthrough
+	case nil:
 		break
 	default:
 		return xerrors.Errorf("failed to prepare Image: %w", err)
