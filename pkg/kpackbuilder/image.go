@@ -41,6 +41,8 @@ const (
 
 var (
 	errNoAvailableRevision = xerrors.Errorf("unknown revision")
+	// ErrPendingPullRequest represents pull request's merge_commit_sha is not ready
+	ErrPendingPullRequest = xerrors.Errorf("pending pull request")
 )
 
 func (b *KpackBuilder) getKpackImageName(revision string) string {
@@ -150,10 +152,17 @@ func (b *KpackBuilder) cleanupOldImages(ctx context.Context, revision string) er
 	return nil
 }
 
-func (b *KpackBuilder) prepareImage(ctx context.Context, saName string) (string, error) {
+func (b *KpackBuilder) prepareImage(ctx context.Context, saName string) (latestImage string, err error) {
 	spec := b.remoteSync.Spec
 	gh := spec.Base.GitHub
 	secretName := gh.SecretName
+	pending := false
+
+	defer func() {
+		if pending && err == nil {
+			err = ErrPendingPullRequest
+		}
+	}()
 
 	token, err := k8sclientutil.GetGitHubAccessToken(ctx, b.client, secretName, b.remoteSync.Namespace, "password")
 
@@ -170,12 +179,23 @@ func (b *KpackBuilder) prepareImage(ctx context.Context, saName string) (string,
 	case len(gh.SHA) != 0:
 		revision = gh.SHA
 	case gh.PullRequest != nil:
-		pr, _, err := ghclient.PullRequests.Get(ctx, gh.Owner, gh.Repository, int(*gh.PullRequest))
+		ref, _, err := ghclient.Git.GetRef(ctx, gh.Owner, gh.Repository, fmt.Sprintf("pull/%d/merge", *gh.PullRequest))
 
 		if err != nil {
-			return "", xerrors.Errorf("failed to get branch for PR(%d): %w", *gh.PullRequest, err)
+			return "", xerrors.Errorf("failed to get PR ref(%d): %w", *gh.PullRequest, err)
 		}
-		revision = pr.GetMergeCommitSHA()
+
+		pr, _, err := ghclient.PullRequests.Get(ctx, gh.Owner, gh.Repository, *gh.PullRequest)
+
+		if err != nil {
+			return "", xerrors.Errorf("failed to get PR(%d): %w", *gh.PullRequest, err)
+		}
+
+		if pr.Mergeable == nil {
+			pending = true
+		}
+
+		revision = ref.GetObject().GetSHA()
 	default:
 		b := gh.Branch
 		if len(b) == 0 {
@@ -225,7 +245,7 @@ func (b *KpackBuilder) prepareImage(ctx context.Context, saName string) (string,
 		return "", xerrors.Errorf("failed to find Image: %w", err)
 	}
 
-	latestImage := ""
+	latestImage = ""
 	if image != nil {
 		latestImage = image.Status.LatestImage
 	}

@@ -1,9 +1,16 @@
 bases:
-  - ../config/default
-
+- ../config/default
+- ingress.yaml
 configMapGenerator:
 - behavior: replace
   name: modoki-operator-cdk8s-chart
   namespace: modoki-operator-system
   files:
     - ../cdk8s-template/charts/chart.ts
+images:
+- name: controller
+  newName: modokipaas/modoki-operator
+  newTag: latest
+- name: controller
+  newName: modokipaas/webhook
+  newTag: latest

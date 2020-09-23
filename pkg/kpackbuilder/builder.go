@@ -40,7 +40,14 @@ func NewKpackBuilder(
 	}
 }
 
-func (b *KpackBuilder) Run(ctx context.Context) error {
+func (b *KpackBuilder) Run(ctx context.Context) (err error) {
+	pending := false
+	defer func() {
+		if pending {
+			err = ErrPendingPullRequest
+		}
+	}()
+
 	saName, err := b.prepareServiceAccount(ctx)
 
 	if err != nil {
@@ -49,13 +56,18 @@ func (b *KpackBuilder) Run(ctx context.Context) error {
 
 	imageName, err := b.prepareImage(ctx, saName)
 
-	if err == errNoAvailableRevision {
+	switch err {
+	case errNoAvailableRevision:
 		b.logger.Info("no available revision")
 
 		return nil
-	}
 
-	if err != nil {
+	case ErrPendingPullRequest:
+		pending = true
+		fallthrough
+	case nil:
+		break
+	default:
 		return xerrors.Errorf("failed to prepare Image: %w", err)
 	}
 
