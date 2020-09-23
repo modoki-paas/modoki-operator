@@ -18,6 +18,7 @@ package controllers
 
 import (
 	"context"
+	"time"
 
 	"github.com/go-logr/logr"
 	"golang.org/x/xerrors"
@@ -68,18 +69,36 @@ func (r *RemoteSyncReconciler) Reconcile(req ctrl.Request) (res ctrl.Result, err
 
 	builder := kpackbuilder.NewKpackBuilder(r.Client, &rs, r.Config, r.Scheme, logger)
 
-	if err := builder.Run(ctx); err != nil {
-		return ctrl.Result{
-			Requeue: true,
-		}, xerrors.Errorf("failed to update RemoteSync: %w", err)
+	err = builder.Run(ctx)
+	pending := false
+
+	if err != nil {
+		if err == kpackbuilder.ErrPendingPullRequest {
+			pending = true
+		} else {
+			return ctrl.Result{
+				Requeue: true,
+			}, xerrors.Errorf("failed to update RemoteSync: %w", err)
+		}
 	}
 
 	rs.Status.Message = ""
+
+	if pending {
+		rs.Status.Message = "merge status is pending"
+	}
 
 	if err := r.Client.Status().Update(ctx, &rs); err != nil {
 		return ctrl.Result{
 			Requeue: true,
 		}, xerrors.Errorf("failed to update status of RemoteSync: %w", err)
+	}
+
+	if pending {
+		return ctrl.Result{
+			Requeue:      true,
+			RequeueAfter: 8 * time.Second,
+		}, nil
 	}
 
 	return ctrl.Result{}, nil
