@@ -170,12 +170,13 @@ func (b *KpackBuilder) prepareImage(ctx context.Context, saName string) (string,
 	case len(gh.SHA) != 0:
 		revision = gh.SHA
 	case gh.PullRequest != nil:
-		pr, _, err := ghclient.PullRequests.Get(ctx, gh.Owner, gh.Repository, int(*gh.PullRequest))
+		pr, _, err := ghclient.Git.GetRef(ctx, gh.Owner, gh.Repository, fmt.Sprintf("pull/%d/merge", *gh.PullRequest))
 
 		if err != nil {
 			return "", xerrors.Errorf("failed to get branch for PR(%d): %w", *gh.PullRequest, err)
 		}
-		revision = pr.GetMergeCommitSHA()
+
+		revision = pr.GetObject().GetSHA()
 	default:
 		b := gh.Branch
 		if len(b) == 0 {
