@@ -14,9 +14,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-// Register registers remoteSync handler to webhook handlers
+// Register registers appPipeline handler to webhook handlers
 func Register(c client.Client, logger logr.Logger) {
-	rsh := &remoteSyncHandler{
+	rsh := &appPipelineHandler{
 		client: c,
 		logger: logger.WithName("appPipelineHandler"),
 	}
@@ -24,20 +24,22 @@ func Register(c client.Client, logger logr.Logger) {
 	webhook.Register("appPipeline", rsh.filter, rsh.operation)
 }
 
-type remoteSyncHandler struct {
+type appPipelineHandler struct {
 	client client.Client
 	logger logr.Logger
 }
 
-func (r *remoteSyncHandler) filter(event string) bool {
+func (r *appPipelineHandler) filter(event string) bool {
 	return event == "pull_request"
 }
 
-func (r *remoteSyncHandler) refresh(ctx context.Context, logger logr.Logger, ap *v1alpha1.AppPipeline) {
+func (r *appPipelineHandler) refresh(ctx context.Context, logger logr.Logger, ap *v1alpha1.AppPipeline) {
 	logger = logger.WithValues(
 		"name", ap.Name,
 		"namespace", ap.Namespace,
 	)
+
+	logger.Info("refreshing appPipeline")
 
 	var err error
 	for i := 0; i < 5; i++ {
@@ -54,7 +56,7 @@ func (r *remoteSyncHandler) refresh(ctx context.Context, logger logr.Logger, ap 
 	return
 }
 
-func (r *remoteSyncHandler) pullRequest(event *github.PullRequestEvent) {
+func (r *appPipelineHandler) pullRequest(event *github.PullRequestEvent) {
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
 
@@ -65,7 +67,7 @@ func (r *remoteSyncHandler) pullRequest(event *github.PullRequestEvent) {
 	// TODO: Should use a better approach. List() every time will cause too much load
 	list := &v1alpha1.AppPipelineList{}
 	if err := r.client.List(ctx, list); err != nil {
-		logger.Error(err, "failed to list RemoteSync", "owner", owner, "repo", repo)
+		logger.Error(err, "failed to list AppPipeline", "owner", owner, "repo", repo)
 	}
 
 	for i := range list.Items {
@@ -81,7 +83,7 @@ func (r *remoteSyncHandler) pullRequest(event *github.PullRequestEvent) {
 	}
 }
 
-func (r *remoteSyncHandler) operation(event string, payload []byte) {
+func (r *appPipelineHandler) operation(event string, payload []byte) {
 	switch event {
 	case "pull_request":
 		event := &github.PullRequestEvent{}

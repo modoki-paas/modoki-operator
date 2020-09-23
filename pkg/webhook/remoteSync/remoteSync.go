@@ -40,6 +40,8 @@ func (r *remoteSyncHandler) refresh(ctx context.Context, logger logr.Logger, rs 
 		"namespace", rs.Namespace,
 	)
 
+	logger.Info("refreshing remoteSync")
+
 	var err error
 	for i := 0; i < 5; i++ {
 		err = k8sclientutil.Patch(ctx, r.client, rs, k8sclientutil.RefreshPatch)
