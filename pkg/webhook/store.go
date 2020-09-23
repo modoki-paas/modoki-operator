@@ -1,6 +1,9 @@
 package webhook
 
-import "sync"
+import (
+	"log"
+	"sync"
+)
 
 // Filter should return the event is catched or not
 type Filter = func(event string) bool
@@ -33,8 +36,9 @@ func Register(name string, f Filter, op Operation) {
 func call(event string, payload []byte) {
 	lock.RLock()
 	defer lock.RUnlock()
-	for _, fp := range registered {
+	for name, fp := range registered {
 		if fp.f(event) {
+			log.Println(name, "found")
 			go func() {
 				fp.lock.Lock()
 				defer fp.lock.Unlock()

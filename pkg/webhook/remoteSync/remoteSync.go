@@ -138,6 +138,8 @@ func (r *remoteSyncHandler) pullRequest(event *github.PullRequestEvent) {
 }
 
 func (r *remoteSyncHandler) operation(event string, payload []byte) {
+	log.Println("remoteSync: ", event)
+
 	switch event {
 	case "push":
 		event := &github.PushEvent{}
