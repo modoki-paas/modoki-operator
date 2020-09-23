@@ -1,7 +1,6 @@
 package webhook
 
 import (
-	"log"
 	"sync"
 )
 
@@ -38,12 +37,11 @@ func call(event string, payload []byte) {
 	defer lock.RUnlock()
 	for name, fp := range registered {
 		if fp.f(event) {
-			log.Println(name, "found")
-			go func() {
+			go func(name string, fp *funcPair) {
 				fp.lock.Lock()
 				defer fp.lock.Unlock()
 				fp.op(event, payload)
-			}()
+			}(name, fp)
 		}
 	}
 }

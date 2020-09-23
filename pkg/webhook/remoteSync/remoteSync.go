@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
 	"strings"
 	"time"
 
@@ -138,13 +137,11 @@ func (r *remoteSyncHandler) pullRequest(event *github.PullRequestEvent) {
 }
 
 func (r *remoteSyncHandler) operation(event string, payload []byte) {
-	log.Println("remoteSync: ", event)
-
 	switch event {
 	case "push":
 		event := &github.PushEvent{}
 		if err := json.Unmarshal(payload, event); err != nil {
-			log.Printf("push payload is invalid: %+v", err)
+			r.logger.Error(err, "push payload is invalid")
 
 			return
 		}
@@ -153,7 +150,7 @@ func (r *remoteSyncHandler) operation(event string, payload []byte) {
 	case "pull_request":
 		event := &github.PullRequestEvent{}
 		if err := json.Unmarshal(payload, event); err != nil {
-			log.Printf("push payload is invalid: %+v", err)
+			r.logger.Error(err, "push payload is invalid")
 
 			return
 		}

@@ -3,7 +3,6 @@ package apppipeline
 import (
 	"context"
 	"encoding/json"
-	"log"
 	"time"
 
 	"github.com/go-logr/logr"
@@ -88,7 +87,7 @@ func (r *appPipelineHandler) operation(event string, payload []byte) {
 	case "pull_request":
 		event := &github.PullRequestEvent{}
 		if err := json.Unmarshal(payload, event); err != nil {
-			log.Printf("push payload is invalid: %+v", err)
+			r.logger.Error(err, "push payload is invalid")
 
 			return
 		}
